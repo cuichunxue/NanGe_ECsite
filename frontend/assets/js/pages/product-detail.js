@@ -4,6 +4,9 @@ import { cartApi, productApi, wishlistApi, getErrorMessage } from '../api.js';
 import { calcDiscountPercent, formatDateTime, formatPrice, LOW_STOCK_THRESHOLD, escapeHtml } from '../format.js';
 import { starRatingHtml, renderProductGrid } from '../components.js';
 import { addRecentlyViewed } from '../recentlyViewed.js';
+import { goToLogin } from '../guards.js';
+import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING_FEE } from '../shipping.js';
+import { refreshCartCount } from '../layout.js';
 import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 
 initLayout({ base: '' });
@@ -79,6 +82,10 @@ function render() {
 
   document.getElementById('description').textContent = product.description;
   document.getElementById('meta-line').textContent = `ブランド: ${product.brand ?? '—'} / SKU: ${product.sku} / 在庫: ${product.stock > 0 ? `${product.stock}点` : '在庫切れ'}`;
+
+  // 送料は購入判断に直結するのに、これまではカートに入れるまで分からなかった。
+  document.getElementById('shipping-note').textContent =
+    `送料: ${formatPrice(STANDARD_SHIPPING_FEE)}（${formatPrice(FREE_SHIPPING_THRESHOLD)}以上のご購入で無料）`;
   if (product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD) {
     document.getElementById('low-stock-badge').classList.remove('hidden');
   }
@@ -101,23 +108,24 @@ document.getElementById('qty-plus').addEventListener('click', () => {
 });
 
 document.getElementById('add-cart-btn').addEventListener('click', async () => {
-  if (!Auth.getUser()) return void (location.href = 'login.html');
+  if (!Auth.getUser()) return void goToLogin();
   try {
     await cartApi.addItem(product.id, quantity);
     showMessage('カートに追加しました');
+    refreshCartCount();
   } catch (err) {
     showMessage(getErrorMessage(err));
   }
 });
 
 document.getElementById('buy-now-btn').addEventListener('click', async () => {
-  if (!Auth.getUser()) return void (location.href = 'login.html');
+  if (!Auth.getUser()) return void goToLogin();
   await cartApi.addItem(product.id, quantity);
   location.href = 'checkout.html';
 });
 
 document.getElementById('wishlist-btn').addEventListener('click', async () => {
-  if (!Auth.getUser()) return void (location.href = 'login.html');
+  if (!Auth.getUser()) return void goToLogin();
   await wishlistApi.add(product.id);
   showMessage('お気に入りに追加しました');
 });

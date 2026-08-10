@@ -30,9 +30,9 @@ function renderHeader(base, keyword) {
             </a>
             ${
               user
-                ? `<div class="group relative">
-                    <button class="text-gray-700 hover:text-brand-500">${escapeHtml(user.name)} 様</button>
-                    <div class="invisible absolute right-0 top-full w-40 rounded border bg-white py-1 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
+                ? `<div class="relative">
+                    <button data-role="user-menu-btn" aria-expanded="false" aria-haspopup="true" class="text-gray-700 hover:text-brand-500">${escapeHtml(user.name)} 様</button>
+                    <div data-role="user-menu" class="absolute right-0 top-full hidden w-40 rounded border bg-white py-1 shadow-lg">
                       <a href="${base}mypage.html" class="block px-4 py-2 hover:bg-gray-50">マイページ</a>
                       <a href="${base}orders.html" class="block px-4 py-2 hover:bg-gray-50">注文履歴</a>
                       ${user.role === 'ADMIN' ? `<a href="${base}admin/index.html" class="block px-4 py-2 hover:bg-gray-50">管理画面</a>` : ''}
@@ -62,25 +62,51 @@ function renderHeader(base, keyword) {
     });
   });
 
+  // メニューはホバーではなくクリック/タップで開閉する。ホバーだけだとタッチ端末で
+  // 開けず、店主がスマホから管理画面に入れなくなる。
+  const menuBtn = el.querySelector('[data-role="user-menu-btn"]');
+  const menu = el.querySelector('[data-role="user-menu"]');
+  if (menuBtn && menu) {
+    const setOpen = (open) => {
+      menu.classList.toggle('hidden', !open);
+      menuBtn.setAttribute('aria-expanded', String(open));
+    };
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setOpen(menu.classList.contains('hidden'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
+
   el.querySelector('[data-role="logout-btn"]')?.addEventListener('click', () => {
     Auth.clear();
     location.href = `${base}index.html`;
   });
 
-  if (user) {
-    cartApi
-      .get()
-      .then((res) => {
-        const count = res.data.totalQuantity;
-        const badge = el.querySelector('[data-role="cart-count"]');
-        if (badge && count > 0) {
-          badge.textContent = String(count);
-          badge.classList.remove('hidden');
-          badge.classList.add('flex');
-        }
-      })
-      .catch(() => {});
-  }
+  if (user) refreshCartCount();
+}
+
+/**
+ * ヘッダーのカート個数バッジを最新にする。
+ * 商品をカートに入れた直後にも呼ぶことで、「入ったのかどうか分からない」状態を防ぐ。
+ */
+export function refreshCartCount() {
+  const badge = document.querySelector('[data-role="cart-count"]');
+  if (!badge || !Auth.getUser()) return;
+  cartApi
+    .get()
+    .then((res) => {
+      const count = res.data.totalQuantity;
+      badge.textContent = String(count);
+      badge.classList.toggle('hidden', count === 0);
+      badge.classList.toggle('flex', count > 0);
+    })
+    .catch(() => {});
 }
 
 function renderFooter(base) {
@@ -114,14 +140,17 @@ const adminNavItems = [
 export function initAdminLayout(activeFile) {
   const el = document.getElementById('admin-sidebar');
   if (!el) return;
+  // 狭い画面では横に並ぶタブ、広い画面では従来どおり縦のサイドバーにする。
+  // 店主はスマホから注文確認・発送を行うことが多いため、縦積みのまま幅を固定すると
+  // 本文が潰れて操作できなくなる。
   el.innerHTML = `
     <div class="card p-2">
-      <p class="px-3 py-2 text-xs font-semibold text-gray-400">管理者メニュー</p>
-      <nav class="flex flex-col">
+      <p class="hidden px-3 py-2 text-xs font-semibold text-gray-400 lg:block">管理者メニュー</p>
+      <nav class="flex gap-1 overflow-x-auto lg:flex-col lg:gap-0 lg:overflow-visible">
         ${adminNavItems
           .map(
             (item) => `
-          <a href="${item.file}" class="rounded px-3 py-2 text-sm ${
+          <a href="${item.file}" class="whitespace-nowrap rounded px-3 py-2 text-sm ${
             item.file === activeFile ? 'bg-brand-50 font-medium text-brand-600' : 'text-gray-600 hover:bg-gray-50'
           }">${item.label}</a>
         `,

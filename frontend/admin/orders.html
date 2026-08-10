@@ -9,8 +9,8 @@
   <body class="flex min-h-screen flex-col">
     <div id="site-header"></div>
     <div class="flex-1">
-      <div class="mx-auto flex max-w-7xl gap-6 px-4 py-6">
-        <aside id="admin-sidebar" class="w-52 shrink-0"></aside>
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
         <main class="min-w-0 flex-1">
           <div class="flex flex-col gap-4">
             <h1 class="text-xl font-bold">注文管理</h1>
@@ -24,7 +24,7 @@
               <option value="REFUNDED">返金済み</option>
             </select>
             <div class="card overflow-x-auto">
-              <table class="w-full text-left text-sm">
+              <table class="w-full min-w-[38rem] text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500">
                   <tr>
                     <th class="p-3">注文番号</th>

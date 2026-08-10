@@ -9,25 +9,27 @@
   <body class="flex min-h-screen flex-col">
     <div id="site-header"></div>
     <div class="flex-1">
-      <div class="mx-auto flex max-w-7xl gap-6 px-4 py-6">
-        <aside id="admin-sidebar" class="w-52 shrink-0"></aside>
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
         <main class="min-w-0 flex-1">
           <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
           <div id="dashboard-view" class="hidden flex-col gap-6">
             <h1 class="text-xl font-bold">ダッシュボード</h1>
-            <div id="stat-cards" class="grid grid-cols-2 gap-4 md:grid-cols-5"></div>
+            <div id="stat-cards" class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5"></div>
             <div class="card p-4">
               <h2 class="mb-3 font-semibold">ステータス別注文数</h2>
               <div id="status-counts" class="flex flex-wrap gap-3"></div>
             </div>
             <div class="card p-4">
               <h2 class="mb-3 font-semibold">最近の注文</h2>
-              <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
-                  <tr><th class="pb-2">注文番号</th><th class="pb-2">会員</th><th class="pb-2">金額</th><th class="pb-2">日時</th></tr>
-                </thead>
-                <tbody id="recent-orders"></tbody>
-              </table>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead class="text-gray-500">
+                    <tr><th class="pb-2">注文番号</th><th class="pb-2">会員</th><th class="pb-2">金額</th><th class="pb-2">日時</th></tr>
+                  </thead>
+                  <tbody id="recent-orders"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </main>

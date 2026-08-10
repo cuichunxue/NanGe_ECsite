@@ -9,8 +9,8 @@
   <body class="flex min-h-screen flex-col">
     <div id="site-header"></div>
     <div class="flex-1">
-      <div class="mx-auto flex max-w-7xl gap-6 px-4 py-6">
-        <aside id="admin-sidebar" class="w-52 shrink-0"></aside>
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
         <main class="min-w-0 flex-1">
           <div class="max-w-2xl">
             <h1 id="page-title" class="mb-6 text-xl font-bold">新規商品登録</h1>
@@ -24,7 +24,7 @@
                 <label class="mb-1 block text-sm text-gray-600">説明</label>
                 <textarea id="description" required class="input" rows="3"></textarea>
               </div>
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label class="mb-1 block text-sm text-gray-600">SKU</label>
                   <input id="sku" required class="input" />
@@ -40,7 +40,7 @@
                   <option value="">選択してください</option>
                 </select>
               </div>
-              <div class="grid grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <label class="mb-1 block text-sm text-gray-600">販売価格</label>
                   <input id="price" required type="number" min="0" class="input" />

@@ -20,9 +20,9 @@ if (requireAdmin('../')) {
           <tr class="border-t" data-product-id="${p.id}">
             <td class="flex items-center gap-2 p-3">
               <img src="${escapeHtml(p.images[0] || NO_IMAGE_PLACEHOLDER)}" class="h-10 w-10 rounded object-cover" />
-              <span class="line-clamp-1">${escapeHtml(p.name)}</span>
+              <span class="line-clamp-2">${escapeHtml(p.name)}</span>
             </td>
-            <td class="p-3 text-gray-500">${escapeHtml(p.sku)}</td>
+            <td class="hidden p-3 text-gray-500 sm:table-cell">${escapeHtml(p.sku)}</td>
             <td class="p-3">${formatPrice(p.price)}</td>
             <td class="p-3 ${p.stock <= 10 ? 'text-red-500' : ''}">${p.stock}</td>
             <td class="p-3">
