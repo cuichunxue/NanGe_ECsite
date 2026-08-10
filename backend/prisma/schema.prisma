@@ -176,7 +176,11 @@ model Order {
   shippingFee     Decimal     @default(0) @db.Decimal(10, 2)
   totalAmount     Decimal     @db.Decimal(10, 2)
   paymentMethod   String?
+  // 決済代行(KOMOJU)の識別子。Webhookで届く通知をこの注文に結び付けるために保持する。
+  paymentSessionId String?    @unique
+  paymentId        String?    @unique
   paidAt          DateTime?
+  refundedAt      DateTime?
   shippedAt       DateTime?
   completedAt     DateTime?
   cancelledAt     DateTime?

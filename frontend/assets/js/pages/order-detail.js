@@ -122,7 +122,13 @@ if (requireAuth('')) {
     pendingActions.classList.add('hidden');
     pendingActions.classList.remove('flex');
     shippedActions.classList.add('hidden');
+    const codNote = document.getElementById('cod-note');
+    codNote.classList.add('hidden');
     if (order.status === 'PENDING_PAYMENT') {
+      const isCod = order.paymentMethod === 'COD';
+      // 代金引換は事前の支払い手続きがないため、支払いボタンではなく案内を出す
+      codNote.classList.toggle('hidden', !isCod);
+      document.getElementById('pay-btn').classList.toggle('hidden', isCod);
       pendingActions.classList.remove('hidden');
       pendingActions.classList.add('flex');
     } else if (order.status === 'SHIPPED') {
@@ -141,12 +147,14 @@ if (requireAuth('')) {
   }
 
   document.getElementById('pay-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
     try {
-      await orderApi.pay(order.id);
-      showMessage('お支払いが完了しました');
-      reload();
+      const res = await orderApi.createPaymentSession(order.id);
+      location.href = res.data.paymentUrl;
     } catch (err) {
-      showMessage(getErrorMessage(err));
+      showMessage(getErrorMessage(err, 'お支払い手続きを開始できませんでした'));
+      btn.disabled = false;
     }
   });
 
@@ -170,6 +178,17 @@ if (requireAuth('')) {
       showMessage(getErrorMessage(err));
     }
   });
+
+  // 決済ページから戻った直後は、入金通知(Webhook)がまだ届いていないことがある。
+  // 購入者が「払ったのに反映されない」と不安にならないよう案内を出しつつ、
+  // 少し待って一度だけ再読み込みする。
+  const params2 = new URLSearchParams(location.search);
+  if (params2.get('payment_error')) {
+    showMessage('お支払い手続きを開始できませんでした。「お支払いに進む」からやり直してください');
+  } else if (params2.get('session_id')) {
+    showMessage('お支払いの確認中です。反映まで少しお待ちください');
+    setTimeout(reload, 3000);
+  }
 
   if (id) reload();
 }

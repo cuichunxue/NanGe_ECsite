@@ -17,6 +17,7 @@ import reviewRoutes from './routes/review.routes';
 import wishlistRoutes from './routes/wishlist.routes';
 import addressRoutes from './routes/address.routes';
 import adminRoutes from './routes/admin.routes';
+import webhookRoutes from './routes/webhook.routes';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,11 @@ export function createApp() {
     }),
   );
   app.use(compression());
+
+  // 決済代行からのWebhookは署名検証のために生のボディが必要なので、
+  // JSONパーサより前に登録する（先にJSONへ変換されると署名を再計算できない）。
+  app.use('/api/webhooks', webhookRoutes);
+
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
   if (!env.isProd) {

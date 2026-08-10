@@ -53,12 +53,14 @@ router.get(
   }),
 );
 
+// 決済ページのURLを発行する。支払い済みにするのはKOMOJUからのWebhookのみ。
 router.post(
-  '/:id/pay',
+  '/:id/payment-session',
+  orderRateLimiter,
   validate(idParamSchema),
   catchAsync(async (req, res) => {
-    const order = await orderService.payOrder(req.user!.id, req.params.id);
-    ok(res, order);
+    const result = await orderService.createPaymentSession(req.user!.id, req.params.id);
+    ok(res, result);
   }),
 );
 

@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const checkoutSchema = z.object({
   body: z.object({
     addressId: z.string().uuid(),
-    paymentMethod: z.enum(['MOCK_CARD', 'MOCK_WALLET', 'COD']).default('MOCK_CARD'),
+    // CREDIT_CARD / PAYPAY はKOMOJUの決済ページへ遷移する。COD(代金引換)は現地払い。
+    paymentMethod: z.enum(['CREDIT_CARD', 'PAYPAY', 'COD']).default('CREDIT_CARD'),
     remark: z.string().max(200).optional(),
   }),
 });

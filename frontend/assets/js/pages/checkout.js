@@ -102,7 +102,21 @@ if (requireAuth('')) {
         addressId: selectedAddress,
         paymentMethod,
       });
-      location.href = `order-detail.html?id=${encodeURIComponent(res.data.id)}`;
+      const orderId = res.data.id;
+
+      if (paymentMethod === 'COD') {
+        location.href = `order-detail.html?id=${encodeURIComponent(orderId)}`;
+        return;
+      }
+
+      // オンライン決済は決済会社のページで支払う。ここで失敗しても注文自体は
+      // 「支払い待ち」で残るので、注文詳細から改めて支払いに進める。
+      try {
+        const session = await orderApi.createPaymentSession(orderId);
+        location.href = session.data.paymentUrl;
+      } catch (err) {
+        location.href = `order-detail.html?id=${encodeURIComponent(orderId)}&payment_error=1`;
+      }
     } catch (err) {
       errorMsg.textContent = getErrorMessage(err, '注文の確定に失敗しました');
       errorMsg.classList.remove('hidden');

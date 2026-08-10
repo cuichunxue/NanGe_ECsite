@@ -8,14 +8,16 @@ if (requireAdmin('../')) {
   initLayout({ base: '../' });
   initAdminLayout('orders.html');
 
-  const transitions = {
-    PENDING_PAYMENT: ['CANCELLED'],
-    PAID: ['SHIPPED', 'REFUNDED'],
-    SHIPPED: ['COMPLETED', 'REFUNDED'],
-    COMPLETED: [],
-    CANCELLED: [],
-    REFUNDED: [],
-  };
+  const PAYMENT_LABEL = { CREDIT_CARD: 'クレジットカード', PAYPAY: 'PayPay', COD: '代金引換' };
+
+  // 代金引換は商品と引き換えに支払われるため、入金前でも発送できる。
+  // オンライン決済は入金が確認できるまで発送させない。
+  function nextStatuses(o) {
+    if (o.status === 'PENDING_PAYMENT') {
+      return o.paymentMethod === 'COD' ? ['SHIPPED', 'CANCELLED'] : ['CANCELLED'];
+    }
+    return { PAID: ['SHIPPED', 'REFUNDED'], SHIPPED: ['COMPLETED', 'REFUNDED'], COMPLETED: [], CANCELLED: [], REFUNDED: [] }[o.status] ?? [];
+  }
 
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
@@ -52,9 +54,13 @@ if (requireAdmin('../')) {
       .join('');
 
     document.getElementById('order-total').textContent = formatPrice(order.totalAmount);
+    const payEl = document.getElementById('order-payment');
+    const label = PAYMENT_LABEL[order.paymentMethod] ?? order.paymentMethod ?? '—';
+    payEl.textContent = order.paymentMethod === 'COD' ? `お支払い方法: ${label}（配達時に集金してください）` : `お支払い方法: ${label}`;
+    payEl.className = order.paymentMethod === 'COD' ? 'text-sm font-medium text-amber-700' : 'text-sm text-gray-500';
 
     const actionsEl = document.getElementById('status-actions');
-    const next = transitions[order.status];
+    const next = nextStatuses(order);
     if (next.length > 0) {
       actionsEl.classList.remove('hidden');
       actionsEl.classList.add('flex');

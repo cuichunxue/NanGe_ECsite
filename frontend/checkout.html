@@ -34,11 +34,14 @@
 
         <section class="card mb-6 p-4">
           <h2 class="mb-3 font-semibold">支払い方法</h2>
-          <div class="flex gap-4 text-sm">
-            <label class="flex items-center gap-1"><input type="radio" name="payment" value="MOCK_CARD" checked /> クレジットカード（モック）</label>
-            <label class="flex items-center gap-1"><input type="radio" name="payment" value="MOCK_WALLET" /> 電子ウォレット（モック）</label>
-            <label class="flex items-center gap-1"><input type="radio" name="payment" value="COD" /> 代金引換</label>
+          <div class="flex flex-col gap-2 text-sm">
+            <label class="flex items-center gap-2"><input type="radio" name="payment" value="CREDIT_CARD" checked /> クレジットカード</label>
+            <label class="flex items-center gap-2"><input type="radio" name="payment" value="PAYPAY" /> PayPay</label>
+            <label class="flex items-center gap-2"><input type="radio" name="payment" value="COD" /> 代金引換（商品お受け取り時にお支払い）</label>
           </div>
+          <p id="payment-note" class="mt-3 text-xs text-gray-500">
+            「注文を確定する」を押すと、決済ページへ移動します。お支払い完了後、自動でこの店舗に戻ります。
+          </p>
         </section>
 
         <div class="mb-6" id="shipping-progress"></div>

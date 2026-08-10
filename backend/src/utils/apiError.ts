@@ -31,4 +31,9 @@ export class ApiError extends Error {
   static internal(message = 'サーバー内部エラーが発生しました', code = 'INTERNAL_ERROR') {
     return new ApiError(500, code, message);
   }
+
+  /** 決済代行など外部サービスとの通信に失敗したとき */
+  static badGateway(message = '外部サービスとの通信に失敗しました', code = 'BAD_GATEWAY') {
+    return new ApiError(502, code, message);
+  }
 }

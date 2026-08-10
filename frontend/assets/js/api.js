@@ -147,7 +147,7 @@ export const orderApi = {
   checkout: (payload) => post('/orders', payload),
   list: (params) => get('/orders', { params }),
   get: (id) => get(`/orders/${id}`),
-  pay: (id) => post(`/orders/${id}/pay`),
+  createPaymentSession: (id) => post(`/orders/${id}/payment-session`),
   cancel: (id) => post(`/orders/${id}/cancel`),
   confirmReceipt: (id) => post(`/orders/${id}/confirm-receipt`),
 };

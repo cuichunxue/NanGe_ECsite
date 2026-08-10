@@ -47,4 +47,11 @@ export const env = {
   mailFrom: process.env.MAIL_FROM ?? '',
   // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
   ownerEmail: process.env.OWNER_EMAIL ?? '',
+
+  // 決済代行(KOMOJU)。未設定なら実決済は行わない。
+  komoju: {
+    apiBase: (process.env.KOMOJU_API_BASE ?? 'https://komoju.com/api/v1').replace(/\/$/, ''),
+    secretKey: process.env.KOMOJU_SECRET_KEY ?? '',
+    webhookSecret: process.env.KOMOJU_WEBHOOK_SECRET ?? '',
+  },
 };

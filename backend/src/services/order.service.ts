@@ -5,6 +5,8 @@ import { generateOrderNo } from '../utils/orderNo';
 import { getOrCreateCart } from './cart.service';
 import { calculateShippingFee } from '../config/shipping';
 import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid } from './orderNotification.service';
+import * as komoju from './komoju.service';
+import { env } from '../config/env';
 
 interface CheckoutInput {
   userId: string;
@@ -104,23 +106,72 @@ export async function checkout(input: CheckoutInput) {
   return order;
 }
 
-export async function payOrder(userId: string, orderId: string) {
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.userId !== userId) throw ApiError.notFound('注文が見つかりません');
-
-  // モック決済: 常に成功として扱う（実決済ゲートウェイに差し替え可能なインターフェース）。
-  // 状態の確認と更新を1つの条件付き更新に閉じ込め、二重クリックや通信リトライで
-  // 決済処理が複数回走らないようにする（実決済に差し替えた際の多重課金を防ぐ）。
-  const paid = await prisma.order.updateMany({
-    where: { id: orderId, status: 'PENDING_PAYMENT' },
-    data: { status: 'PAID', paidAt: new Date() },
+/**
+ * 決済ページ（KOMOJUのセッション）を用意し、購入者を送り出すURLを返す。
+ *
+ * ここでは注文を支払い済みにしない。ブラウザからの要求で支払い済みにできてしまうと、
+ * 実際には入金がないまま商品を発送することになるため、支払いの確定は
+ * KOMOJUからのWebhook（署名付き）だけが行う。
+ */
+export async function createPaymentSession(userId: string, orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, user: { select: { email: true } } },
   });
-  if (paid.count === 0) {
+  if (!order || order.userId !== userId) throw ApiError.notFound('注文が見つかりません');
+  if (order.status !== 'PENDING_PAYMENT') {
     throw ApiError.conflict('この注文は支払い待ち状態ではありません', 'INVALID_ORDER_STATUS');
   }
-  // 条件付き更新に成功したリクエストだけが通知する（連打しても店主に何通も届かない）
+  const method = order.paymentMethod;
+  if (method !== 'CREDIT_CARD' && method !== 'PAYPAY') {
+    throw ApiError.badRequest('この注文はオンライン決済の対象ではありません', 'NOT_ONLINE_PAYMENT');
+  }
+
+  const session = await komoju.createPaymentSession({
+    amount: Number(order.totalAmount),
+    method,
+    email: order.user.email,
+    returnUrl: `${env.siteUrl}/order-detail.html?id=${order.id}`,
+    orderId: order.id,
+    orderNo: order.orderNo,
+    userId,
+    lineItems: order.items.map((i) => ({
+      name: i.productName,
+      amount: Number(i.price),
+      quantity: i.quantity,
+    })),
+  });
+
+  // Webhookで届く決済通知をこの注文に結び付けるための控え
+  await prisma.order.update({ where: { id: orderId }, data: { paymentSessionId: session.id } });
+  return { paymentUrl: session.session_url };
+}
+
+/**
+ * 入金を確定して注文を支払い済みにする。Webhookからのみ呼ばれる。
+ * 同じ通知が複数回届いても二重に処理されないよう、条件付き更新で確定させる。
+ */
+export async function markOrderPaid(orderId: string, paymentId: string) {
+  const paid = await prisma.order.updateMany({
+    where: { id: orderId, status: 'PENDING_PAYMENT' },
+    data: { status: 'PAID', paidAt: new Date(), paymentId },
+  });
+  if (paid.count === 0) return false;
   notifyOwnerOrderPaid(orderId);
-  return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+  return true;
+}
+
+/**
+ * 返金の完了を記録する。Webhookからのみ呼ばれる。
+ * 店主が管理画面で返金操作をした時点ではKOMOJUへ依頼するだけで、
+ * 実際に返金が成立したことはこの通知で確定させる。
+ */
+export async function markOrderRefunded(orderId: string) {
+  const updated = await prisma.order.updateMany({
+    where: { id: orderId, status: { in: ['PAID', 'SHIPPED', 'COMPLETED'] } },
+    data: { status: 'REFUNDED', refundedAt: new Date() },
+  });
+  return updated.count > 0;
 }
 
 export async function cancelOrder(userId: string, orderId: string) {
@@ -165,8 +216,12 @@ export async function confirmReceipt(userId: string, orderId: string) {
 const ADMIN_TRANSITIONS: Record<string, string[]> = {
   PAID: ['SHIPPED', 'REFUNDED'],
   SHIPPED: ['COMPLETED', 'REFUNDED'],
-  PENDING_PAYMENT: ['CANCELLED'],
+  // 代金引換は商品と引き換えに支払われるため、支払い待ちのまま発送する。
+  // オンライン決済の注文は入金前に発送させない（下の isCashOnDelivery で判定）。
+  PENDING_PAYMENT: ['CANCELLED', 'SHIPPED'],
 };
+
+const isCashOnDelivery = (order: { paymentMethod: string | null }) => order.paymentMethod === 'COD';
 
 export async function adminUpdateStatus(orderId: string, nextStatus: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -175,8 +230,27 @@ export async function adminUpdateStatus(orderId: string, nextStatus: string) {
   if (!allowed.includes(nextStatus)) {
     throw ApiError.conflict(`「${order.status}」から「${nextStatus}」への変更はできません`, 'INVALID_TRANSITION');
   }
+  if (order.status === 'PENDING_PAYMENT' && nextStatus === 'SHIPPED' && !isCashOnDelivery(order)) {
+    throw ApiError.conflict('入金が確認できていないため発送できません', 'PAYMENT_NOT_CONFIRMED');
+  }
+
+  // 返金は先に決済会社へ依頼する。依頼が通らないうちに「返金済み」と表示すると、
+  // 実際にはお金が戻っていないのに戻ったことになってしまう。
+  // 実際の反映はKOMOJUからの payment.refunded 通知で確定させる。
+  if (nextStatus === 'REFUNDED' && order.paymentId && komoju.isKomojuConfigured()) {
+    await komoju.refundPayment(order.paymentId, `注文 ${order.orderNo} の返金`);
+  }
+
   const timestampField =
-    nextStatus === 'SHIPPED' ? 'shippedAt' : nextStatus === 'COMPLETED' ? 'completedAt' : nextStatus === 'CANCELLED' ? 'cancelledAt' : undefined;
+    nextStatus === 'SHIPPED'
+      ? 'shippedAt'
+      : nextStatus === 'COMPLETED'
+        ? 'completedAt'
+        : nextStatus === 'CANCELLED'
+          ? 'cancelledAt'
+          : nextStatus === 'REFUNDED'
+            ? 'refundedAt'
+            : undefined;
 
   // 遷移元のステータスを更新条件に含める。判定に使った状態が更新までの間に
   // 購入者側の操作（受取確認・キャンセル）で変わっていた場合は、
