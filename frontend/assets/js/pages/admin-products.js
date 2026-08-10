@@ -1,4 +1,5 @@
 import { initLayout, initAdminLayout } from '../layout.js';
+import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAdmin } from '../guards.js';
 import { productApi } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
@@ -18,7 +19,7 @@ if (requireAdmin('../')) {
           (p) => `
           <tr class="border-t" data-product-id="${p.id}">
             <td class="flex items-center gap-2 p-3">
-              <img src="${escapeHtml(p.images[0] ?? '')}" class="h-10 w-10 rounded object-cover" />
+              <img src="${escapeHtml(p.images[0] || NO_IMAGE_PLACEHOLDER)}" class="h-10 w-10 rounded object-cover" />
               <span class="line-clamp-1">${escapeHtml(p.name)}</span>
             </td>
             <td class="p-3 text-gray-500">${escapeHtml(p.sku)}</td>

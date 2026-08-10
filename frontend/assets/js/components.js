@@ -1,5 +1,6 @@
 import { calcDiscountPercent, formatPrice, LOW_STOCK_THRESHOLD, escapeHtml } from './format.js';
 import { FREE_SHIPPING_THRESHOLD } from './shipping.js';
+import { NO_IMAGE_PLACEHOLDER } from './placeholder.js';
 
 export function starRatingHtml(value, count) {
   const rounded = Math.round(value * 2) / 2;
@@ -15,7 +16,7 @@ export function starRatingHtml(value, count) {
 
 export function productCardHtml(product) {
   const discountPercent = calcDiscountPercent(product.price, product.originalPrice);
-  const image = product.images?.[0] ?? 'https://placehold.co/400x400?text=No+Image';
+  const image = product.images?.[0] || NO_IMAGE_PLACEHOLDER;
   const badge =
     discountPercent !== null
       ? `<span class="absolute left-2 top-2 z-10 rounded bg-red-600 px-1.5 py-0.5 text-xs font-bold text-white">-${discountPercent}%</span>`

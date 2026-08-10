@@ -4,8 +4,10 @@
 
 - 要件定義書: [`docs/requirements.md`](docs/requirements.md)
 - バックエンド: Node.js / Express / TypeScript / Prisma / PostgreSQL
-- フロントエンド: 素のHTML / CSS / JavaScript（ビルド不要、ES Modules。Tailwind CSSはCDN経由で利用）
+- フロントエンド: 素のHTML / CSS / JavaScript（ES Modules。配信にビルド不要）
 - 認証: JWT（アクセストークン + リフレッシュトークン）
+
+フロントエンドは外部CDNに一切依存しません。CSSは生成済みのものをリポジトリに含めているため、配信するだけで動きます（詳細は「スタイル(CSS)の変更」を参照）。
 
 ## 主な機能
 
@@ -70,6 +72,20 @@ npm run dev                  # http://localhost:5173 で静的配信（依存パ
 
 `npm run dev` は Node.js 標準機能のみで実装した簡易サーバー（`server.js`）を起動します。任意の静的ファイルサーバー（`npx serve`、`python -m http.server` 等）でも代替可能です。
 
+### スタイル(CSS)の変更
+
+`frontend/assets/css/style.css` は Tailwind CSS から生成済みのファイルで、リポジトリにコミットされています。**サイトを動かすだけならビルドは不要**です。
+
+配色を変えたい、または新しいTailwindのクラス名を使い始めたときだけ、再生成してください。
+
+```bash
+cd frontend
+npm install          # 初回のみ（tailwindcss を取得）
+npm run build:css    # tailwind.config.js と assets/css/tailwind-src.css から style.css を再生成
+```
+
+配色は `frontend/tailwind.config.js` の `brand` を編集します。共通のボタン・入力欄・カードの見た目は `frontend/assets/css/tailwind-src.css` にまとまっています。
+
 ### デモアカウント（シード投入済み）
 
 | 種別 | メールアドレス | パスワード |
@@ -94,6 +110,18 @@ npm start                 # node dist/index.js
 cd frontend
 npm start                  # 動作確認用に簡易サーバーで配信する場合
 ```
+
+### リバースプロキシ配下で動かす場合（重要）
+
+nginx や Cloudflare などを前段に置く場合は、`backend/.env` に `TRUST_PROXY` を設定してください。
+
+```bash
+TRUST_PROXY=1   # プロキシ1段。Cloudflare + nginx のように2段なら 2
+```
+
+設定しないと、全ての訪問者がプロキシのIPアドレスとして扱われます。レート制限は本来「訪問者ごと」にかかりますが、この状態では**サイト全体で1つの枠を共有**することになり、アクセスが集中した際に訪問者全員が閲覧できなくなります。
+
+逆に、バックエンドをインターネットに直接公開している場合は未設定のままにしてください。設定すると、リクエストヘッダを詐称してレート制限を回避されます。
 
 ## テスト
 

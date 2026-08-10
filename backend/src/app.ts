@@ -21,6 +21,11 @@ import adminRoutes from './routes/admin.routes';
 export function createApp() {
   const app = express();
 
+  // リバースプロキシ配下では TRUST_PROXY を設定すること。未設定だと訪問者の
+  // IPが全てプロキシのIPになり、レート制限が訪問者ごとではなくサイト全体に
+  // かかってしまう（アクセスが集中した際に全員が締め出される）。
+  app.set('trust proxy', env.trustProxy);
+
   app.use(helmet());
   app.use(
     cors({

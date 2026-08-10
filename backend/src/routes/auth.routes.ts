@@ -3,7 +3,7 @@ import { prisma } from '../config/prisma';
 import { env } from '../config/env';
 import { validate } from '../middleware/validate';
 import { requireAuth } from '../middleware/auth';
-import { authRateLimiter } from '../middleware/rateLimiter';
+import { authRateLimiter, loginRateLimiter, refreshRateLimiter } from '../middleware/rateLimiter';
 import { catchAsync } from '../utils/catchAsync';
 import { ok } from '../utils/apiResponse';
 import {
@@ -31,7 +31,7 @@ router.post(
 
 router.post(
   '/login',
-  authRateLimiter,
+  loginRateLimiter,
   validate(loginSchema),
   catchAsync(async (req, res) => {
     const result = await authService.login(req.body);
@@ -41,7 +41,7 @@ router.post(
 
 router.post(
   '/refresh',
-  authRateLimiter,
+  refreshRateLimiter,
   validate(refreshSchema),
   catchAsync(async (req, res) => {
     const result = await authService.refresh(req.body.refreshToken);

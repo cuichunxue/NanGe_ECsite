@@ -4,6 +4,7 @@ import { cartApi, productApi, wishlistApi, getErrorMessage } from '../api.js';
 import { calcDiscountPercent, formatDateTime, formatPrice, LOW_STOCK_THRESHOLD, escapeHtml } from '../format.js';
 import { starRatingHtml, renderProductGrid } from '../components.js';
 import { addRecentlyViewed } from '../recentlyViewed.js';
+import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 
 initLayout({ base: '' });
 
@@ -15,7 +16,7 @@ let quantity = 1;
 let activeImage = 0;
 
 function renderImages() {
-  document.getElementById('main-image').src = product.images[activeImage];
+  document.getElementById('main-image').src = product.images[activeImage] || NO_IMAGE_PLACEHOLDER;
   document.getElementById('main-image').alt = product.name;
   const thumbs = document.getElementById('thumbnails');
   if (product.images.length > 1) {

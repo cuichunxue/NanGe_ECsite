@@ -1,4 +1,5 @@
 import { initLayout, initAdminLayout } from '../layout.js';
+import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAdmin } from '../guards.js';
 import { adminApi, getErrorMessage } from '../api.js';
 import { formatDateTime, formatPrice, orderStatusColor, orderStatusLabel, escapeHtml } from '../format.js';
@@ -40,7 +41,7 @@ if (requireAdmin('../')) {
       .map(
         (item) => `
         <div class="flex items-center gap-4 py-3">
-          <img src="${escapeHtml(item.productImage ?? '')}" class="h-16 w-16 rounded object-cover" />
+          <img src="${escapeHtml(item.productImage || NO_IMAGE_PLACEHOLDER)}" class="h-16 w-16 rounded object-cover" />
           <div class="flex-1">
             <p class="text-sm">${escapeHtml(item.productName)}</p>
             <p class="text-xs text-gray-400">${formatPrice(item.price)} × ${item.quantity}</p>

@@ -1,4 +1,5 @@
 import { initLayout } from '../layout.js';
+import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAuth } from '../guards.js';
 import { cartApi } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
@@ -22,7 +23,7 @@ if (requireAuth('')) {
       .map(
         (item) => `
         <div class="flex items-center gap-4 p-4" data-product-id="${item.productId}">
-          <img src="${escapeHtml(item.product.images[0] ?? '')}" class="h-20 w-20 rounded object-cover" />
+          <img src="${escapeHtml(item.product.images[0] || NO_IMAGE_PLACEHOLDER)}" class="h-20 w-20 rounded object-cover" />
           <div class="min-w-0 flex-1">
             <a href="product-detail.html?id=${encodeURIComponent(item.productId)}" class="line-clamp-2 text-sm font-medium hover:text-brand-500">${escapeHtml(item.product.name)}</a>
             ${

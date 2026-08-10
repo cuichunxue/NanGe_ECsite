@@ -20,9 +20,23 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
+      // どの項目が重複したかを伝えないと、運営者は何を直せばよいか判断できない。
+      // Prismaは meta.target に一意制約の対象カラムを返すので、日本語の項目名に対応付ける。
+      const FIELD_LABEL: Record<string, string> = {
+        sku: '商品コード(SKU)',
+        email: 'メールアドレス',
+        orderNo: '注文番号',
+        token: '認証トークン',
+      };
+      const target = err.meta?.target;
+      const columns = Array.isArray(target) ? target.map(String) : typeof target === 'string' ? [target] : [];
+      const label = columns.map((c) => FIELD_LABEL[c] ?? c).join('・');
       return res.status(409).json({
         success: false,
-        error: { code: 'DUPLICATE', message: '既に存在するデータです' },
+        error: {
+          code: 'DUPLICATE',
+          message: label ? `この${label}は既に使われています。別の値を入力してください` : '既に存在するデータです',
+        },
       });
     }
     if (err.code === 'P2025') {
