@@ -34,4 +34,17 @@ export const env = {
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   isProd: process.env.NODE_ENV === 'production',
+
+  // メール本文に載せる購入者向けサイトのURL（注文詳細ページへのリンクに使う）
+  siteUrl: (process.env.SITE_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
+  smtp: {
+    host: process.env.SMTP_HOST ?? '',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+  },
+  mailFrom: process.env.MAIL_FROM ?? '',
+  // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
+  ownerEmail: process.env.OWNER_EMAIL ?? '',
 };

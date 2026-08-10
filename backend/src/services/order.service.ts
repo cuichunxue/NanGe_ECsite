@@ -4,6 +4,7 @@ import { ApiError } from '../utils/apiError';
 import { generateOrderNo } from '../utils/orderNo';
 import { getOrCreateCart } from './cart.service';
 import { calculateShippingFee } from '../config/shipping';
+import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid } from './orderNotification.service';
 
 interface CheckoutInput {
   userId: string;
@@ -97,6 +98,9 @@ export async function checkout(input: CheckoutInput) {
     return createdOrder;
   });
 
+  // 通知はここまでの処理が確定してから行う。送信可否は注文の成否に影響させない。
+  notifyOrderPlaced(order.id);
+
   return order;
 }
 
@@ -114,6 +118,8 @@ export async function payOrder(userId: string, orderId: string) {
   if (paid.count === 0) {
     throw ApiError.conflict('この注文は支払い待ち状態ではありません', 'INVALID_ORDER_STATUS');
   }
+  // 条件付き更新に成功したリクエストだけが通知する（連打しても店主に何通も届かない）
+  notifyOwnerOrderPaid(orderId);
   return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
 }
 
@@ -185,5 +191,6 @@ export async function adminUpdateStatus(orderId: string, nextStatus: string) {
   if (updated.count === 0) {
     throw ApiError.conflict('注文の状態が変更されました。画面を再読み込みしてください', 'INVALID_TRANSITION');
   }
+  if (nextStatus === 'SHIPPED') notifyOrderShipped(orderId);
   return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
 }

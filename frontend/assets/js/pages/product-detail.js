@@ -81,7 +81,12 @@ function render() {
   }
 
   document.getElementById('description').textContent = product.description;
-  document.getElementById('meta-line').textContent = `ブランド: ${product.brand ?? '—'} / SKU: ${product.sku} / 在庫: ${product.stock > 0 ? `${product.stock}点` : '在庫切れ'}`;
+  // SKUは在庫管理用の内部番号なので購入者には見せない。ブランドも未設定なら
+  // 「—」を出さずに項目ごと省き、余計な情報で判断を邪魔しないようにする。
+  const meta = [];
+  if (product.brand) meta.push(`ブランド: ${product.brand}`);
+  meta.push(`在庫: ${product.stock > 0 ? `${product.stock}点` : '在庫切れ'}`);
+  document.getElementById('meta-line').textContent = meta.join(' / ');
 
   // 送料は購入判断に直結するのに、これまではカートに入れるまで分からなかった。
   document.getElementById('shipping-note').textContent =

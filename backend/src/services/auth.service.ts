@@ -4,6 +4,7 @@ import { ApiError } from '../utils/apiError';
 import { comparePassword, hashPassword } from '../utils/password';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { env } from '../config/env';
+import { sendMailInBackground } from './mail.service';
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30分
 
@@ -127,10 +128,10 @@ export async function changePassword(userId: string, currentPassword: string, ne
 }
 
 /**
- * パスワード再設定用トークンを発行する。メールアドレスの存在有無を外部に漏らさないため、
- * 未登録アドレスでも常に成功扱いのレスポンスとする（呼び出し元でメッセージを統一すること）。
- * 実運用では resetUrl をメール送信サービスで届ける。メール未連携の間は、開発環境でのみ
- * レスポンスにトークンを含めて動作確認できるようにしている。
+ * パスワード再設定用トークンを発行し、再設定リンクをメールで送る。
+ * メールアドレスの存在有無を外部に漏らさないため、未登録アドレスでも常に成功扱いの
+ * レスポンスとする（呼び出し元でメッセージを統一すること）。
+ * SMTP未設定の間は送信されずログに出力されるので、開発中はそちらから確認できる。
  */
 export async function requestPasswordReset(email: string): Promise<{ token: string; expiresAt: Date } | null> {
   const user = await prisma.user.findUnique({ where: { email } });
@@ -145,7 +146,20 @@ export async function requestPasswordReset(email: string): Promise<{ token: stri
     prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash, expiresAt } }),
   ]);
 
-  console.log(`[password-reset] ${email} 宛のリセットトークンを発行しました（本来はメール送信）: ${token}`);
+  sendMailInBackground({
+    to: user.email,
+    subject: '【Solo Shop】パスワード再設定のご案内',
+    text: [
+      `${user.name} 様`,
+      '',
+      '下記のリンクからパスワードを再設定してください。',
+      `${env.siteUrl}/reset-password.html?token=${token}`,
+      '',
+      'このリンクは30分間有効で、一度お使いになると無効になります。',
+      'お心当たりがない場合は、このメールを破棄してください。',
+    ].join('\n'),
+  });
+
   return { token, expiresAt };
 }
 
