@@ -10,9 +10,6 @@ CREATE TYPE "ProductStatus" AS ENUM ('ON_SALE', 'OFF_SHELF');
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING_PAYMENT', 'PAID', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'REFUNDED');
 
--- CreateEnum
-CREATE TYPE "DiscountType" AS ENUM ('FIXED', 'PERCENTAGE');
-
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -41,6 +38,18 @@ CREATE TABLE "RefreshToken" (
 );
 
 -- CreateTable
+CREATE TABLE "PasswordResetToken" (
+    "id" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PasswordResetToken_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Address" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -62,7 +71,6 @@ CREATE TABLE "Address" (
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "parentId" TEXT,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "imageUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -124,10 +132,8 @@ CREATE TABLE "Order" (
     "addressId" TEXT,
     "addressSnapshot" JSONB NOT NULL,
     "subtotal" DECIMAL(10,2) NOT NULL,
-    "discount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "shippingFee" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "totalAmount" DECIMAL(10,2) NOT NULL,
-    "couponId" TEXT,
     "paymentMethod" TEXT,
     "paidAt" TIMESTAMP(3),
     "shippedAt" TIMESTAMP(3),
@@ -178,51 +184,6 @@ CREATE TABLE "Wishlist" (
     CONSTRAINT "Wishlist_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Coupon" (
-    "id" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
-    "description" TEXT,
-    "discountType" "DiscountType" NOT NULL,
-    "discountValue" DECIMAL(10,2) NOT NULL,
-    "minAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
-    "maxDiscount" DECIMAL(10,2),
-    "totalQuantity" INTEGER NOT NULL DEFAULT 0,
-    "claimedCount" INTEGER NOT NULL DEFAULT 0,
-    "startsAt" TIMESTAMP(3) NOT NULL,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Coupon_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "UserCoupon" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "couponId" TEXT NOT NULL,
-    "usedAt" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "UserCoupon_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Banner" (
-    "id" TEXT NOT NULL,
-    "imageUrl" TEXT NOT NULL,
-    "linkUrl" TEXT,
-    "title" TEXT,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Banner_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -236,10 +197,13 @@ CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
 CREATE INDEX "RefreshToken_userId_idx" ON "RefreshToken"("userId");
 
 -- CreateIndex
-CREATE INDEX "Address_userId_idx" ON "Address"("userId");
+CREATE UNIQUE INDEX "PasswordResetToken_tokenHash_key" ON "PasswordResetToken"("tokenHash");
 
 -- CreateIndex
-CREATE INDEX "Category_parentId_idx" ON "Category"("parentId");
+CREATE INDEX "PasswordResetToken_userId_idx" ON "PasswordResetToken"("userId");
+
+-- CreateIndex
+CREATE INDEX "Address_userId_idx" ON "Address"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Product_sku_key" ON "Product"("sku");
@@ -286,20 +250,14 @@ CREATE INDEX "Review_userId_idx" ON "Review"("userId");
 -- CreateIndex
 CREATE UNIQUE INDEX "Wishlist_userId_productId_key" ON "Wishlist"("userId", "productId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Coupon_code_key" ON "Coupon"("code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "UserCoupon_userId_couponId_key" ON "UserCoupon"("userId", "couponId");
-
 -- AddForeignKey
 ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "PasswordResetToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -320,9 +278,6 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") RE
 ALTER TABLE "Order" ADD CONSTRAINT "Order_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "Address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_couponId_fkey" FOREIGN KEY ("couponId") REFERENCES "Coupon"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -339,9 +294,3 @@ ALTER TABLE "Wishlist" ADD CONSTRAINT "Wishlist_userId_fkey" FOREIGN KEY ("userI
 
 -- AddForeignKey
 ALTER TABLE "Wishlist" ADD CONSTRAINT "Wishlist_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "UserCoupon" ADD CONSTRAINT "UserCoupon_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "UserCoupon" ADD CONSTRAINT "UserCoupon_couponId_fkey" FOREIGN KEY ("couponId") REFERENCES "Coupon"("id") ON DELETE CASCADE ON UPDATE CASCADE;
