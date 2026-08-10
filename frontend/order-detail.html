@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>注文詳細 - Solo Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: { extend: { colors: { brand: { 50: '#fdf4ee', 100: '#f8e3d3', 400: '#d98a52', 500: '#c1682f', 600: '#a5551f', 700: '#7c4018' } } } },
+      };
+    </script>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
+
+      <div id="detail-view" class="mx-auto hidden max-w-3xl px-4 py-8">
+        <a href="orders.html" class="text-sm text-brand-500 hover:underline">← 注文履歴に戻る</a>
+        <div class="card mt-4 p-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h1 id="order-no" class="text-lg font-bold"></h1>
+              <p id="order-created" class="text-sm text-gray-400"></p>
+            </div>
+            <span id="order-status-badge" class="rounded px-3 py-1 text-sm"></span>
+          </div>
+
+          <p id="message" class="mb-4 hidden rounded bg-blue-50 px-3 py-2 text-sm text-blue-700"></p>
+
+          <div class="mb-4 rounded bg-gray-50 p-3 text-sm text-gray-600">
+            <p class="mb-1 font-medium">配送先</p>
+            <p id="address-recipient"></p>
+            <p id="address-detail"></p>
+          </div>
+
+          <div id="order-items" class="divide-y"></div>
+
+          <div class="mt-4 flex flex-col gap-1 border-t pt-4 text-sm text-gray-600">
+            <div class="flex justify-between"><span>商品小計</span><span id="summary-subtotal"></span></div>
+            <div class="flex justify-between"><span>割引</span><span id="summary-discount"></span></div>
+            <div class="flex justify-between"><span>送料</span><span id="summary-shipping"></span></div>
+            <div class="flex justify-between text-base font-bold text-brand-500"><span>合計</span><span id="summary-total"></span></div>
+          </div>
+
+          <div id="pending-actions" class="mt-6 hidden gap-3">
+            <button id="pay-btn" class="btn-primary flex-1">支払う</button>
+            <button id="cancel-btn" class="btn-secondary flex-1">注文をキャンセル</button>
+          </div>
+
+          <div id="shipped-actions" class="mt-6 hidden">
+            <button id="confirm-receipt-btn" class="btn-primary w-full">受け取りを確認する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="assets/js/pages/order-detail.js"></script>
+  </body>
+</html>

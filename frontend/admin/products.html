@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>商品管理 - 管理画面 - Solo Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: { extend: { colors: { brand: { 50: '#fdf4ee', 100: '#f8e3d3', 400: '#d98a52', 500: '#c1682f', 600: '#a5551f', 700: '#7c4018' } } } },
+      };
+    </script>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <div class="mx-auto flex max-w-7xl gap-6 px-4 py-6">
+        <aside id="admin-sidebar" class="w-52 shrink-0"></aside>
+        <main class="min-w-0 flex-1">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <h1 class="text-xl font-bold">商品管理</h1>
+              <a href="product-form.html" class="btn-primary">+ 新規商品登録</a>
+            </div>
+            <div class="flex gap-2">
+              <input id="keyword" class="input max-w-xs" placeholder="商品名で検索" />
+              <button id="search-btn" class="btn-secondary">検索</button>
+            </div>
+            <div class="card overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500">
+                  <tr>
+                    <th class="p-3">商品</th>
+                    <th class="p-3">SKU</th>
+                    <th class="p-3">価格</th>
+                    <th class="p-3">在庫</th>
+                    <th class="p-3">ステータス</th>
+                    <th class="p-3">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="product-rows"></tbody>
+              </table>
+            </div>
+            <div id="pagination"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="../assets/js/pages/admin-products.js"></script>
+  </body>
+</html>

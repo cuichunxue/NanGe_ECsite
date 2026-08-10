@@ -1,0 +1,11 @@
+{
+  "name": "solo-shop-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "素のHTML/CSS/JavaScript（ビルド不要・ES Modules）で実装されたフロントエンド",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}
