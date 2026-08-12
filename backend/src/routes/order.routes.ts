@@ -9,6 +9,8 @@ import { ApiError } from '../utils/apiError';
 import { idParamSchema } from '../validators/common';
 import { checkoutSchema, listOrdersQuerySchema } from '../validators/orderValidators';
 import * as orderService from '../services/order.service';
+import { calculateTaxBreakdown, shippingTaxLine } from '../config/tax';
+import { env } from '../config/env';
 
 const router = Router();
 router.use(requireAuth);
@@ -50,6 +52,39 @@ router.get(
     const order = await prisma.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
     if (!order || order.userId !== req.user!.id) throw ApiError.notFound('注文が見つかりません');
     ok(res, order);
+  }),
+);
+
+/**
+ * 請求書・領収書の内容を返す。
+ * 登録番号が設定されているときだけ「適格請求書」として扱う
+ * （免税事業者は適格請求書を発行できないため）。
+ */
+router.get(
+  '/:id/invoice',
+  validate(idParamSchema),
+  catchAsync(async (req, res) => {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
+    if (!order || order.userId !== req.user!.id) throw ApiError.notFound('注文が見つかりません');
+    if (order.status === 'PENDING_PAYMENT' || order.status === 'CANCELLED') {
+      throw ApiError.conflict('お支払いが完了した注文のみ発行できます', 'INVOICE_NOT_AVAILABLE');
+    }
+
+    const lines = [
+      ...order.items.map((i) => ({ taxIncludedAmount: Number(i.price) * i.quantity, taxRate: i.taxRate })),
+      ...shippingTaxLine(Number(order.shippingFee)),
+    ];
+
+    ok(res, {
+      order,
+      issuer: {
+        name: env.invoice.issuerName,
+        registrationNumber: env.invoice.registrationNumber,
+      },
+      // 登録番号があれば適格請求書、なければ領収書として発行する
+      qualified: Boolean(env.invoice.registrationNumber),
+      taxBreakdown: calculateTaxBreakdown(lines),
+    });
   }),
 );
 

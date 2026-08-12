@@ -5,7 +5,7 @@ import { calcDiscountPercent, formatDateTime, formatPrice, LOW_STOCK_THRESHOLD, 
 import { starRatingHtml, renderProductGrid } from '../components.js';
 import { addRecentlyViewed } from '../recentlyViewed.js';
 import { goToLogin } from '../guards.js';
-import { FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING_FEE } from '../shipping.js';
+import { BASE_SHIPPING_FEE, FREE_SHIPPING_THRESHOLD, shippingFeeSummary } from '../shipping.js';
 import { refreshCartCount } from '../layout.js';
 import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 
@@ -90,7 +90,7 @@ function render() {
 
   // 送料は購入判断に直結するのに、これまではカートに入れるまで分からなかった。
   document.getElementById('shipping-note').textContent =
-    `送料: ${formatPrice(STANDARD_SHIPPING_FEE)}（${formatPrice(FREE_SHIPPING_THRESHOLD)}以上のご購入で無料）`;
+    `送料: ${formatPrice(BASE_SHIPPING_FEE)}〜（${shippingFeeSummary()}）／ ${formatPrice(FREE_SHIPPING_THRESHOLD)}以上のご購入で無料`;
   if (product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD) {
     document.getElementById('low-stock-badge').classList.remove('hidden');
   }

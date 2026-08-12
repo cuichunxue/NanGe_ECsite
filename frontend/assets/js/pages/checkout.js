@@ -2,7 +2,7 @@ import { initLayout } from '../layout.js';
 import { requireAuth } from '../guards.js';
 import { addressApi, cartApi, orderApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
-import { calculateShippingFee } from '../shipping.js';
+import { calculateShippingFee, resolveShippingRegion, SHIPPING_REGIONS } from '../shipping.js';
 import { renderFreeShippingProgress } from '../components.js';
 
 if (requireAuth('')) {
@@ -37,6 +37,7 @@ if (requireAuth('')) {
       label.addEventListener('click', () => {
         selectedAddress = label.dataset.addressId;
         renderAddresses();
+        renderSummary(); // 届け先で送料が変わるため合計も引き直す
       });
     });
   }
@@ -74,12 +75,20 @@ if (requireAuth('')) {
 
   function renderSummary() {
     const subtotal = cart?.totalAmount ?? 0;
-    const shippingFee = calculateShippingFee(subtotal);
+    const province = addresses.find((a) => a.id === selectedAddress)?.province;
+    const shippingFee = calculateShippingFee(subtotal, province);
     const total = subtotal + shippingFee;
 
     renderFreeShippingProgress(document.getElementById('shipping-progress'), subtotal);
     document.getElementById('summary-subtotal').textContent = formatPrice(subtotal);
-    document.getElementById('summary-shipping').textContent = shippingFee === 0 ? '無料' : formatPrice(shippingFee);
+    const shippingEl = document.getElementById('summary-shipping');
+    if (shippingFee === 0) {
+      shippingEl.textContent = '無料';
+    } else if (province) {
+      shippingEl.textContent = `${formatPrice(shippingFee)}（${SHIPPING_REGIONS.find((r) => r.key === resolveShippingRegion(province)).label}）`;
+    } else {
+      shippingEl.textContent = formatPrice(shippingFee);
+    }
     document.getElementById('summary-total').textContent = formatPrice(total);
     document.getElementById('submit-btn').textContent = submitting ? '処理中…' : `注文を確定する（${formatPrice(total)}）`;
     return { total };

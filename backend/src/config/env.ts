@@ -52,6 +52,14 @@ export const env = {
   // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
   ownerEmail: process.env.OWNER_EMAIL ?? '',
 
+  // 請求書・領収書に記載する事業者情報。
+  // 登録番号は「適格請求書発行事業者」として登録した場合のみ設定する。
+  // 免税事業者は適格請求書を発行できないため、未設定なら領収書として発行する。
+  invoice: {
+    issuerName: process.env.INVOICE_ISSUER_NAME ?? '',
+    registrationNumber: process.env.INVOICE_REGISTRATION_NUMBER ?? '',
+  },
+
   // 支払われないまま放置された注文の在庫を、何分後に売り場へ戻すか。
   // 注文と同時に在庫を確保しているため、戻さないと決済ページで離脱されただけで
   // 商品が売れなくなる。決済ページの有効期限はこの半分にして、

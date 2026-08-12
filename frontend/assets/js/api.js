@@ -148,6 +148,7 @@ export const orderApi = {
   list: (params) => get('/orders', { params }),
   get: (id) => get(`/orders/${id}`),
   createPaymentSession: (id) => post(`/orders/${id}/payment-session`),
+  invoice: (id) => get(`/orders/${id}/invoice`),
   cancel: (id) => post(`/orders/${id}/cancel`),
   confirmReceipt: (id) => post(`/orders/${id}/confirm-receipt`),
 };

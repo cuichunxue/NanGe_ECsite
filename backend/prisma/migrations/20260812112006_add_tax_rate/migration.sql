@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "OrderItem" ADD COLUMN     "taxRate" INTEGER NOT NULL DEFAULT 10;
+
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "taxRate" INTEGER NOT NULL DEFAULT 10;
+

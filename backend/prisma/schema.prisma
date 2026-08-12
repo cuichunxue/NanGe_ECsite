@@ -121,6 +121,9 @@ model Product {
   category      Category      @relation(fields: [categoryId], references: [id])
   price         Decimal       @db.Decimal(10, 2)
   originalPrice Decimal?      @db.Decimal(10, 2)
+  // 消費税率(%)。価格は税込で保持し、請求書ではここから内訳を割り戻す。
+  // 飲食料品（酒類・外食を除く）は軽減税率8%。
+  taxRate       Int           @default(10)
   stock         Int           @default(0)
   images        String[]      @default([])
   status        ProductStatus @default(ON_SALE)
@@ -203,6 +206,9 @@ model OrderItem {
   productImage String?
   price        Decimal  @db.Decimal(10, 2)
   quantity     Int
+  // 購入時点の税率を控える。後から商品の税率を変えても、
+  // 発行済みの請求書の内訳が変わってしまわないようにする。
+  taxRate      Int      @default(10)
   createdAt    DateTime @default(now())
 
   @@index([orderId])

@@ -24,6 +24,8 @@ const productBody = z.object({
   originalPrice: z.number().positive().optional(),
   stock: z.number().int().min(0),
   images: z.array(z.string().url()).default([]),
+  // 飲食料品（酒類・外食を除く）は軽減税率8%、それ以外は10%
+  taxRate: z.union([z.literal(10), z.literal(8)]).default(10),
   status: z.enum(['ON_SALE', 'OFF_SHELF']).optional(),
 });
 

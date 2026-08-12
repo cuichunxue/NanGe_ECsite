@@ -96,6 +96,7 @@ if (requireAdmin('../')) {
       document.getElementById('price').value = p.price;
       document.getElementById('original-price').value = p.originalPrice ?? '';
       document.getElementById('stock').value = String(p.stock);
+      document.getElementById('tax-rate').value = String(p.taxRate ?? 10);
       images = [...p.images];
       syncImageField();
       renderImages();
@@ -120,6 +121,7 @@ if (requireAdmin('../')) {
         price: Number(document.getElementById('price').value),
         originalPrice: originalPrice ? Number(originalPrice) : undefined,
         stock: Number(document.getElementById('stock').value),
+        taxRate: Number(document.getElementById('tax-rate').value),
         images,
       };
       if (isEdit) {

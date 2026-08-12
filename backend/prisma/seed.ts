@@ -130,6 +130,8 @@ async function main() {
     },
     {
       sku: 'FD-4001',
+      // 飲食料品は軽減税率8%
+      taxRate: 8,
       name: '自家焙煎コーヒー豆（200g）',
       description: '週末に少量ずつ焙煎している、浅煎りのシングルオリジン。',
       brand: '焙煎所ひとつぶ',
@@ -140,6 +142,8 @@ async function main() {
     },
     {
       sku: 'FD-4002',
+      // 飲食料品は軽減税率8%
+      taxRate: 8,
       name: '手作りジャム3種セット',
       description: '季節の果物で仕込む、砂糖控えめの手作りジャム3本セット。',
       brand: '焙煎所ひとつぶ',

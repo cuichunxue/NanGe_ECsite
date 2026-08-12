@@ -68,7 +68,9 @@ export async function checkout(input: CheckoutInput) {
 
     const subtotal = freshItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
 
-    const shippingFee = calculateShippingFee(subtotal);
+    // 送料は届け先の都道府県で決まる。金額を確定させるのは必ずここ（サーバー側）で、
+    // 画面に表示していた金額をそのまま信用しない。
+    const shippingFee = calculateShippingFee(subtotal, address.province);
     const totalAmount = Math.max(0, subtotal + shippingFee);
 
     const createdOrder = await tx.order.create({
@@ -89,6 +91,7 @@ export async function checkout(input: CheckoutInput) {
             productImage: item.product.images[0],
             price: item.product.price,
             quantity: item.quantity,
+            taxRate: item.product.taxRate,
           })),
         },
       },

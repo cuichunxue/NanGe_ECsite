@@ -122,6 +122,11 @@ if (requireAuth('')) {
     pendingActions.classList.add('hidden');
     pendingActions.classList.remove('flex');
     shippedActions.classList.add('hidden');
+    // 領収書はお支払いが済んだ注文でのみ発行する
+    const canIssueInvoice = ['PAID', 'SHIPPED', 'COMPLETED', 'REFUNDED'].includes(order.status);
+    document.getElementById('invoice-link-wrap').classList.toggle('hidden', !canIssueInvoice);
+    document.getElementById('invoice-link').href = `invoice.html?id=${encodeURIComponent(order.id)}`;
+
     const codNote = document.getElementById('cod-note');
     codNote.classList.add('hidden');
     if (order.status === 'PENDING_PAYMENT') {

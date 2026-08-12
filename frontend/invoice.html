@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>領収書 - Solo Shop</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+      /* 印刷時は画面用の余白やボタンを外し、紙1枚に収める */
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        body {
+          background: #fff;
+        }
+        .print-sheet {
+          border: none;
+          box-shadow: none;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header" class="no-print"></div>
+    <div class="flex-1">
+      <div class="mx-auto max-w-3xl px-4 py-8">
+        <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
+        <p id="error-msg" class="hidden rounded bg-red-50 px-3 py-2 text-sm text-red-600"></p>
+
+        <div id="invoice-view" class="hidden">
+          <div class="no-print mb-4 flex items-center justify-between">
+            <a id="back-link" href="orders.html" class="text-sm text-brand-500 hover:underline">← 注文詳細に戻る</a>
+            <button id="print-btn" class="btn-primary">印刷 / PDFで保存</button>
+          </div>
+
+          <div class="card print-sheet p-8">
+            <h1 id="doc-title" class="mb-6 text-center text-xl font-bold"></h1>
+
+            <div class="mb-6 flex flex-wrap justify-between gap-4 text-sm">
+              <div>
+                <p id="recipient-name" class="mb-1 border-b border-gray-400 pb-1 text-base"></p>
+                <p class="text-xs text-gray-500">様</p>
+              </div>
+              <div class="text-right">
+                <p id="issuer-name" class="font-medium"></p>
+                <p id="issuer-number" class="text-gray-600"></p>
+                <p id="issue-date" class="mt-1 text-gray-500"></p>
+                <p id="order-no" class="text-gray-500"></p>
+              </div>
+            </div>
+
+            <p class="mb-6 border-y py-3 text-center">
+              <span class="text-sm text-gray-600">合計金額</span>
+              <span id="grand-total" class="ml-3 text-2xl font-bold"></span>
+              <span class="ml-1 text-sm text-gray-500">（税込）</span>
+            </p>
+
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[30rem] text-left text-sm">
+                <thead class="border-b text-gray-500">
+                  <tr>
+                    <th class="pb-2">品名</th>
+                    <th class="pb-2 text-right">数量</th>
+                    <th class="pb-2 text-right">単価</th>
+                    <th class="pb-2 text-right">金額</th>
+                  </tr>
+                </thead>
+                <tbody id="invoice-items" class="divide-y"></tbody>
+              </table>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+              <table class="w-full max-w-xs text-sm">
+                <tbody id="tax-breakdown" class="divide-y"></tbody>
+              </table>
+            </div>
+
+            <p id="reduced-note" class="mt-4 hidden text-xs text-gray-500">※ は軽減税率(8%)の対象品目です。</p>
+            <p id="qualified-note" class="mt-4 text-xs text-gray-500"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="site-footer" class="no-print"></div>
+    <script type="module" src="assets/js/pages/invoice.js"></script>
+  </body>
+</html>

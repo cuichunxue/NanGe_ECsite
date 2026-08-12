@@ -55,6 +55,14 @@
                 </div>
               </div>
               <div>
+                <label class="mb-1 block text-sm text-gray-600">消費税率</label>
+                <select id="tax-rate" class="input">
+                  <option value="10">10%（標準税率）</option>
+                  <option value="8">8%（軽減税率 — 飲食料品）</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-400">価格は税込で入力してください。飲食料品（酒類・外食を除く）は8%です。</p>
+              </div>
+              <div>
                 <label class="mb-1 block text-sm text-gray-600">商品写真</label>
                 <div id="image-list" class="mb-2 flex flex-wrap gap-3"></div>
                 <p id="no-image-msg" class="mb-2 text-sm text-gray-400">まだ写真がありません</p>
