@@ -196,5 +196,6 @@ export const adminApi = {
   setUserStatus: (id, status) => patch(`/admin/users/${id}/status`, { status }),
   orders: (params) => get('/admin/orders', { params }),
   order: (id) => get(`/admin/orders/${id}`),
-  setOrderStatus: (id, status) => patch(`/admin/orders/${id}/status`, { status }),
+  // 発送(SHIPPED)にするときだけ、配送業者と追跡番号を一緒に記録できる
+  setOrderStatus: (id, status, shipment = {}) => patch(`/admin/orders/${id}/status`, { status, ...shipment }),
 };

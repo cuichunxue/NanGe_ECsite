@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CARRIER_KEYS } from '../config/carrier';
 
 export const checkoutSchema = z.object({
   body: z.object({
@@ -22,6 +23,9 @@ export const listOrdersQuerySchema = z.object({
 export const updateOrderStatusSchema = z.object({
   body: z.object({
     status: z.enum(['PAID', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'REFUNDED']),
+    // 発送時のみ使う。追跡に対応しない発送方法（定形外郵便など）もあるため任意。
+    carrier: z.enum(CARRIER_KEYS as [string, ...string[]]).optional(),
+    trackingNumber: z.string().trim().max(64).optional(),
   }),
   params: z.object({ id: z.string().uuid() }),
 });

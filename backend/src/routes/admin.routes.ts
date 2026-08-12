@@ -119,7 +119,10 @@ router.patch(
   '/orders/:id/status',
   validate(updateOrderStatusSchema),
   catchAsync(async (req, res) => {
-    const order = await orderService.adminUpdateStatus(req.params.id, req.body.status);
+    const order = await orderService.adminUpdateStatus(req.params.id, req.body.status, {
+      carrier: req.body.carrier,
+      trackingNumber: req.body.trackingNumber,
+    });
     ok(res, order);
   }),
 );

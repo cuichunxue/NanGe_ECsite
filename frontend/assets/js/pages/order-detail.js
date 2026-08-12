@@ -2,6 +2,7 @@ import { initLayout } from '../layout.js';
 import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAuth } from '../guards.js';
 import { orderApi, reviewApi, getErrorMessage } from '../api.js';
+import { carrierLabel, trackingUrlFor } from '../carrier.js';
 import { formatDateTime, formatPrice, orderStatusColor, orderStatusLabel, escapeHtml } from '../format.js';
 
 if (requireAuth('')) {
@@ -96,6 +97,22 @@ if (requireAuth('')) {
     }
   }
 
+  // 発送後に購入者が最も知りたい情報。控えが無い発送方法もあるため、あるときだけ出す。
+  function renderTracking() {
+    const box = document.getElementById('tracking-box');
+    if (!order.trackingNumber) {
+      box.classList.add('hidden');
+      return;
+    }
+    document.getElementById('tracking-carrier').textContent = `配送業者: ${carrierLabel(order.carrier)}`;
+    document.getElementById('tracking-number').textContent = `お問い合わせ番号: ${order.trackingNumber}`;
+    const link = document.getElementById('tracking-link');
+    const url = trackingUrlFor(order.carrier, order.trackingNumber);
+    link.classList.toggle('hidden', !url);
+    if (url) link.href = url;
+    box.classList.remove('hidden');
+  }
+
   function render() {
     document.getElementById('loading-msg').classList.add('hidden');
     document.getElementById('detail-view').classList.remove('hidden');
@@ -103,7 +120,8 @@ if (requireAuth('')) {
     document.getElementById('order-no').textContent = `注文番号: ${order.orderNo}`;
     document.getElementById('order-created').textContent = formatDateTime(order.createdAt);
     const badge = document.getElementById('order-status-badge');
-    badge.className = `rounded px-3 py-1 text-sm ${orderStatusColor[order.status]}`;
+    // 注文番号が長いため、狭い画面でバッジが縦に折り返されないようにする
+    badge.className = `shrink-0 whitespace-nowrap rounded px-3 py-1 text-sm ${orderStatusColor[order.status]}`;
     badge.textContent = orderStatusLabel[order.status];
 
     document.getElementById('address-recipient').textContent = `${order.addressSnapshot.recipient} (${order.addressSnapshot.phone})`;
@@ -111,6 +129,7 @@ if (requireAuth('')) {
       'address-detail',
     ).textContent = `${order.addressSnapshot.province}${order.addressSnapshot.city}${order.addressSnapshot.district}${order.addressSnapshot.detail}`;
 
+    renderTracking();
     renderItems();
 
     document.getElementById('summary-subtotal').textContent = formatPrice(order.subtotal);

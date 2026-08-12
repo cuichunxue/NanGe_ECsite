@@ -16,12 +16,12 @@
           <div id="detail-view" class="hidden max-w-3xl">
             <a href="orders.html" class="text-sm text-brand-500 hover:underline">← 注文一覧に戻る</a>
             <div class="card mt-4 p-6">
-              <div class="mb-4 flex items-center justify-between">
-                <div>
-                  <h1 id="order-no" class="text-lg font-bold"></h1>
+              <div class="mb-4 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h1 id="order-no" class="break-all text-lg font-bold"></h1>
                   <p id="order-created" class="text-sm text-gray-400"></p>
-                  <p id="order-buyer" class="text-sm text-gray-500"></p>
-            <p id="order-payment" class="text-sm text-gray-500"></p>
+                  <p id="order-buyer" class="break-all text-sm text-gray-500"></p>
+                  <p id="order-payment" class="text-sm text-gray-500"></p>
                 </div>
                 <span id="order-status-badge" class="rounded px-3 py-1 text-sm"></span>
               </div>
@@ -39,6 +39,27 @@
               <div class="mt-4 flex justify-between border-t pt-4 text-base font-bold text-brand-500">
                 <span>合計</span>
                 <span id="order-total"></span>
+              </div>
+
+              <p id="tracking-info" class="mt-6 hidden text-sm text-gray-600"></p>
+
+              <div id="ship-form" class="mt-6 hidden rounded border bg-gray-50 p-4">
+                <p class="mb-3 text-sm font-medium">発送の内容を記録します</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-600">配送業者</label>
+                    <select id="ship-carrier" class="input"></select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-600">お問い合わせ番号</label>
+                    <input id="ship-tracking" class="input" placeholder="例: 1234-5678-9012" />
+                  </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">追跡番号は購入者への発送メールに記載されます。追跡できない発送方法の場合は空欄のままで構いません。</p>
+                <div class="mt-3 flex gap-2">
+                  <button id="ship-confirm-btn" class="btn-primary">発送済みにする</button>
+                  <button id="ship-cancel-btn" class="btn-secondary">やめる</button>
+                </div>
               </div>
 
               <div id="status-actions" class="mt-6 hidden gap-3"></div>

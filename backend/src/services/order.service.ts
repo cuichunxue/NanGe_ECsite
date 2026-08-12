@@ -232,7 +232,12 @@ const ADMIN_TRANSITIONS: Record<string, string[]> = {
 
 const isCashOnDelivery = (order: { paymentMethod: string | null }) => order.paymentMethod === 'COD';
 
-export async function adminUpdateStatus(orderId: string, nextStatus: string) {
+export interface ShipmentInfo {
+  carrier?: string;
+  trackingNumber?: string;
+}
+
+export async function adminUpdateStatus(orderId: string, nextStatus: string, shipment: ShipmentInfo = {}) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw ApiError.notFound('注文が見つかりません');
   const allowed = ADMIN_TRANSITIONS[order.status] ?? [];
@@ -270,6 +275,10 @@ export async function adminUpdateStatus(orderId: string, nextStatus: string) {
       data: {
         status: nextStatus as never,
         ...(timestampField ? { [timestampField]: new Date() } : {}),
+        // 発送時に配送業者と追跡番号を控える。入力が無ければ何も書き込まない
+        // （追跡番号を出せない発送方法でも発送できるようにするため）。
+        ...(nextStatus === 'SHIPPED' && shipment.carrier ? { carrier: shipment.carrier } : {}),
+        ...(nextStatus === 'SHIPPED' && shipment.trackingNumber ? { trackingNumber: shipment.trackingNumber } : {}),
       },
     });
     if (updated.count === 0) {

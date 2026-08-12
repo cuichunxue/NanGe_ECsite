@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma';
 import { env } from '../config/env';
 import { sendMailInBackground } from './mail.service';
+import { carrierLabel, trackingUrlFor } from '../config/carrier';
 
 /**
  * 注文に関するメール通知。
@@ -26,6 +27,19 @@ function formatAddress(snapshot: unknown): string {
   const a = (snapshot ?? {}) as Record<string, string | undefined>;
   const zip = a.postalCode ? `〒${a.postalCode}\n` : '';
   return `${zip}${a.province ?? ''}${a.city ?? ''}${a.district ?? ''}${a.detail ?? ''}\n${a.recipient ?? ''} 様（${a.phone ?? ''}）`;
+}
+
+/**
+ * 追跡番号の案内。購入者が最も知りたい情報なので、番号と追跡ページのURLを載せる。
+ * 追跡に対応しない発送方法もあるため、控えが無ければ何も出さない。
+ */
+function formatTracking(order: OrderForMail): string[] {
+  if (!order.trackingNumber) return [];
+  const lines = ['', `配送業者: ${carrierLabel(order.carrier)}`, `お問い合わせ番号: ${order.trackingNumber}`];
+  const url = trackingUrlFor(order.carrier, order.trackingNumber);
+  if (url) lines.push(`配送状況: ${url}`);
+  lines.push('※ 反映まで、発送から数時間かかることがあります。');
+  return lines;
 }
 
 function formatItems(order: OrderForMail): string {
@@ -151,6 +165,7 @@ export function notifyOrderShipped(orderId: string): void {
         'ご注文いただいた商品を発送しました。到着まで今しばらくお待ちください。',
         '',
         `注文番号: ${order.orderNo}`,
+        ...formatTracking(order),
         '',
         '【商品】',
         formatItems(order),

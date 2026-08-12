@@ -184,6 +184,9 @@ model Order {
   paymentId        String?    @unique
   paidAt          DateTime?
   refundedAt      DateTime?
+  // 発送時に控える配送業者と追跡番号。追跡に対応しない発送方法もあるため任意。
+  carrier         String?
+  trackingNumber  String?
   shippedAt       DateTime?
   completedAt     DateTime?
   cancelledAt     DateTime?
