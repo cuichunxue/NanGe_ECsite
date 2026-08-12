@@ -37,6 +37,10 @@ export const env = {
 
   // メール本文に載せる購入者向けサイトのURL（注文詳細ページへのリンクに使う）
   siteUrl: (process.env.SITE_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
+  // このAPIサーバー自身の公開URL。アップロードした商品画像のURLを組み立てるのに使う。
+  publicApiUrl: (process.env.PUBLIC_API_URL ?? `http://localhost:${Number(process.env.PORT ?? 4000)}`).replace(/\/$/, ''),
+  // アップロードした商品画像の保存先
+  uploadDir: process.env.UPLOAD_DIR ?? 'uploads',
   smtp: {
     host: process.env.SMTP_HOST ?? '',
     port: Number(process.env.SMTP_PORT ?? 587),
@@ -47,6 +51,12 @@ export const env = {
   mailFrom: process.env.MAIL_FROM ?? '',
   // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
   ownerEmail: process.env.OWNER_EMAIL ?? '',
+
+  // 支払われないまま放置された注文の在庫を、何分後に売り場へ戻すか。
+  // 注文と同時に在庫を確保しているため、戻さないと決済ページで離脱されただけで
+  // 商品が売れなくなる。決済ページの有効期限はこの半分にして、
+  // 在庫を戻した後に支払われる事態が起きないようにする。
+  paymentHoldMinutes: Math.max(10, Number(process.env.PAYMENT_HOLD_MINUTES ?? 60)),
 
   // 決済代行(KOMOJU)。未設定なら実決済は行わない。
   komoju: {

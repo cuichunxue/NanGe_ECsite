@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { MulterError } from 'multer';
 import { ApiError } from '../utils/apiError';
+import { MAX_IMAGE_BYTES } from '../services/upload.service';
 
 export function notFoundHandler(req: Request, res: Response) {
   res.status(404).json({
@@ -16,6 +18,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
       success: false,
       error: { code: err.code, message: err.message },
     });
+  }
+
+  // 添付ファイルの制限に引っかかった場合。原因が分からないと運営者は
+  // 「サイトが壊れた」と受け取ってしまうため、何をすればよいかを返す。
+  if (err instanceof MulterError) {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? `画像は${Math.floor(MAX_IMAGE_BYTES / 1024 / 1024)}MBまでです。小さくしてからお試しください`
+        : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+          ? '一度にアップロードできる画像は1枚です'
+          : 'ファイルを受け取れませんでした';
+    return res.status(400).json({ success: false, error: { code: err.code, message } });
   }
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {

@@ -168,7 +168,28 @@ export const wishlistApi = {
 };
 
 // --- Admin ---
+/**
+ * 画像の送信。FormDataを使うので、JSON用のラッパーではなく個別に組み立てる
+ * （Content-Typeはブラウザに境界文字ごと決めさせる必要があるため指定しない）。
+ */
+async function postFile(path, file) {
+  const form = new FormData();
+  form.append('file', file);
+  const token = Auth.getAccessToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || payload?.success === false) {
+    throw new ApiError(payload?.error?.code ?? 'UNKNOWN', payload?.error?.message ?? 'アップロードに失敗しました');
+  }
+  return payload;
+}
+
 export const adminApi = {
+  uploadImage: (file) => postFile('/admin/uploads', file),
   dashboard: () => get('/admin/dashboard'),
   users: (params) => get('/admin/users', { params }),
   setUserStatus: (id, status) => patch(`/admin/users/${id}/status`, { status }),

@@ -45,6 +45,26 @@ export function createApp() {
   if (!env.isProd) {
     app.use(morgan('dev'));
   }
+  // アップロードされた商品画像を配信する。
+  // 中身は画像であることを確認済みだが、万一に備えて種別の推測を禁止し、
+  // ブラウザが別の形式として解釈しないようにする。
+  //
+  // 購入者向けサイトはこのAPIとは別のオリジンで配信されるため、Helmetが既定で付ける
+  // Cross-Origin-Resource-Policy: same-origin のままだと商品写真が表示されない。
+  // 商品写真は誰でも見てよい公開情報なので、この配信経路に限り cross-origin を許す。
+  app.use(
+    '/uploads',
+    express.static(env.uploadDir, {
+      index: false,
+      dotfiles: 'ignore',
+      maxAge: '30d',
+      setHeaders: (res) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      },
+    }),
+  );
+
   app.use('/api', apiRateLimiter);
 
   // liveness: プロセスが応答可能かのみを見る軽量チェック（依存先には触れない）

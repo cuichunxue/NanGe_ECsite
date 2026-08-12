@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
 import { prisma } from '../config/prisma';
 import { requireAuth, requireAdmin } from '../middleware/auth';
@@ -10,6 +11,7 @@ import { idParamSchema, paginationQuery } from '../validators/common';
 import { updateOrderStatusSchema, listOrdersQuerySchema } from '../validators/orderValidators';
 import * as orderService from '../services/order.service';
 import { toPublicUser } from '../services/auth.service';
+import { MAX_IMAGE_BYTES, storeProductImage } from '../services/upload.service';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -119,6 +121,23 @@ router.patch(
   catchAsync(async (req, res) => {
     const order = await orderService.adminUpdateStatus(req.params.id, req.body.status);
     ok(res, order);
+  }),
+);
+
+// --- 商品画像のアップロード ---
+// メモリ上で受け取り、画像と確認できたものだけを保存する。
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+});
+
+router.post(
+  '/uploads',
+  imageUpload.single('file'),
+  catchAsync(async (req, res) => {
+    if (!req.file) throw ApiError.badRequest('画像が選択されていません', 'NO_FILE');
+    const stored = await storeProductImage(req.file);
+    ok(res, stored, 201);
   }),
 );
 

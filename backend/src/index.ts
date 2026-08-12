@@ -1,12 +1,16 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './config/prisma';
+import { startOrderCleanup } from './services/orderCleanup.service';
 
 const app = createApp();
 
 const server = app.listen(env.port, () => {
   console.log(`[Solo Shop API] listening on port ${env.port} (${env.nodeEnv})`);
 });
+
+// 支払われなかった注文が在庫を握ったままにならないよう、定期的に売り場へ戻す
+startOrderCleanup();
 
 async function shutdown(signal: string) {
   console.log(`\n${signal} received. shutting down gracefully...`);

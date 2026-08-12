@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma';
 import { catchAsync } from '../utils/catchAsync';
 import * as komoju from '../services/komoju.service';
 import * as orderService from '../services/order.service';
+import { notifyOwnerPaymentNeedsAttention } from '../services/orderNotification.service';
 
 const router = Router();
 
@@ -53,7 +54,17 @@ router.post(
           return res.json({ success: true, data: { handled: false } });
         }
         const applied = await orderService.markOrderPaid(order.id, payment.id);
-        console.log(`[komoju] 入金確定 注文=${order.orderNo} ${applied ? '（反映）' : '（反映済みのため無視）'}`);
+        if (applied) {
+          console.log(`[komoju] 入金確定 注文=${order.orderNo}`);
+        } else if (order.status === 'CANCELLED') {
+          // 取り消し済みの注文に入金が届いた場合、商品を確保していないのにお金だけ
+          // 受け取った状態になる。放置すると購入者との間で問題になるため、
+          // 店主に返金の要否を知らせる。
+          console.error(`[komoju] 取り消し済みの注文に入金がありました 注文=${order.orderNo} 決済=${payment.id}`);
+          notifyOwnerPaymentNeedsAttention(order.id, payment.id);
+        } else {
+          console.log(`[komoju] 入金確定（反映済みのため無視） 注文=${order.orderNo}`);
+        }
         break;
       }
       case 'payment.refunded': {

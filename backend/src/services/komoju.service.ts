@@ -90,6 +90,9 @@ export async function createPaymentSession(input: CreateSessionInput): Promise<K
     currency: 'JPY',
     return_url: input.returnUrl,
     email: input.email,
+    // 在庫を確保しておく時間の半分で決済ページを閉じる。在庫を売り場に戻した後で
+    // 支払いだけ成立してしまう（商品がないのに入金される）状態を避けるための余裕。
+    expires_in_seconds: Math.floor((env.paymentHoldMinutes * 60) / 2),
     default_locale: 'ja',
     payment_types: [KOMOJU_PAYMENT_TYPE[input.method]],
     external_customer_id: input.userId,

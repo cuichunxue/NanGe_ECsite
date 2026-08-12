@@ -106,6 +106,37 @@ export function notifyOwnerOrderPaid(orderId: string): void {
   })().catch((err) => console.error('[mail] 注文通知メールの準備に失敗しました', err));
 }
 
+/**
+ * 取り消し済みの注文に入金が届いたことを店主に知らせる。
+ * 商品を確保していないのに代金だけ受け取った状態なので、返金の判断が要る。
+ */
+export function notifyOwnerPaymentNeedsAttention(orderId: string, paymentId: string): void {
+  void (async () => {
+    const [order, ownerEmail] = await Promise.all([loadOrder(orderId), resolveOwnerEmail()]);
+    if (!order || !ownerEmail) return;
+    sendMailInBackground({
+      to: ownerEmail,
+      subject: `【Solo Shop】要確認: 取り消し済みの注文に入金がありました（${order.orderNo}）`,
+      text: [
+        'お支払い期限が過ぎて取り消した注文に、入金が確認されました。',
+        '商品の在庫は売り場に戻してあるため、代金だけをお預かりしている状態です。',
+        '返金するか、あらためて商品を確保して発送するかをご判断ください。',
+        '',
+        `注文番号: ${order.orderNo}`,
+        `決済ID: ${paymentId}`,
+        `ご購入者: ${order.user.name} 様（${order.user.email}）`,
+        '',
+        '【商品】',
+        formatItems(order),
+        '',
+        formatAmounts(order),
+        '',
+        `${env.siteUrl}/admin/order-detail.html?id=${order.id}`,
+      ].join('\n'),
+    });
+  })().catch((err) => console.error('[mail] 要確認通知の準備に失敗しました', err));
+}
+
 /** 購入者へ発送を知らせる */
 export function notifyOrderShipped(orderId: string): void {
   void (async () => {
