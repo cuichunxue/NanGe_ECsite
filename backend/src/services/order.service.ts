@@ -174,8 +174,19 @@ export async function markOrderRefunded(orderId: string) {
   return updated.count > 0;
 }
 
+/** 取り消された注文の在庫を売り場へ戻す。状態遷移に成功したときだけ呼ぶこと。 */
+async function restoreStock(tx: Prisma.TransactionClient, orderId: string) {
+  const items = await tx.orderItem.findMany({ where: { orderId } });
+  for (const item of items) {
+    await tx.product.update({
+      where: { id: item.productId },
+      data: { stock: { increment: item.quantity }, salesCount: { decrement: item.quantity } },
+    });
+  }
+}
+
 export async function cancelOrder(userId: string, orderId: string) {
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.userId !== userId) throw ApiError.notFound('注文が見つかりません');
 
   return prisma.$transaction(async (tx) => {
@@ -189,12 +200,7 @@ export async function cancelOrder(userId: string, orderId: string) {
     if (cancelled.count === 0) {
       throw ApiError.conflict('支払い待ちの注文のみキャンセルできます', 'INVALID_ORDER_STATUS');
     }
-    for (const item of order.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: item.quantity }, salesCount: { decrement: item.quantity } },
-      });
-    }
+    await restoreStock(tx, orderId);
     return tx.order.findUniqueOrThrow({ where: { id: orderId } });
   });
 }
@@ -255,16 +261,25 @@ export async function adminUpdateStatus(orderId: string, nextStatus: string) {
   // 遷移元のステータスを更新条件に含める。判定に使った状態が更新までの間に
   // 購入者側の操作（受取確認・キャンセル）で変わっていた場合は、
   // 古い前提のまま上書きせず、画面の再読み込みを促す。
-  const updated = await prisma.order.updateMany({
-    where: { id: orderId, status: order.status },
-    data: {
-      status: nextStatus as never,
-      ...(timestampField ? { [timestampField]: new Date() } : {}),
-    },
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
+      data: {
+        status: nextStatus as never,
+        ...(timestampField ? { [timestampField]: new Date() } : {}),
+      },
+    });
+    if (updated.count === 0) {
+      throw ApiError.conflict('注文の状態が変更されました。画面を再読み込みしてください', 'INVALID_TRANSITION');
+    }
+    // 店主が未払いの注文を取り消した場合も、購入者が自分で取り消したときと同じく
+    // 在庫を戻す。戻さないと、支払われなかった注文の分だけ在庫が減ったままになり、
+    // 一点物では二度と売れなくなってしまう。
+    if (nextStatus === 'CANCELLED') {
+      await restoreStock(tx, orderId);
+    }
   });
-  if (updated.count === 0) {
-    throw ApiError.conflict('注文の状態が変更されました。画面を再読み込みしてください', 'INVALID_TRANSITION');
-  }
+
   if (nextStatus === 'SHIPPED') notifyOrderShipped(orderId);
   return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
 }
