@@ -26,6 +26,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     errorMsg.textContent = getErrorMessage(err, '登録に失敗しました');
     errorMsg.classList.remove('hidden');
     submitBtn.disabled = false;
-    submitBtn.textContent = '登録する';
+    submitBtn.textContent = '同意して登録する';
   }
 });

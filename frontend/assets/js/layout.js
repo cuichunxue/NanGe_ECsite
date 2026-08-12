@@ -115,8 +115,10 @@ function renderFooter(base) {
   el.innerHTML = `
     <footer class="mt-16 border-t bg-white py-8 text-center text-sm text-gray-500">
       <p>Solo Shop — 個人で運営する小さなオンラインショップです</p>
-      <nav class="mt-3 flex justify-center gap-4 text-xs">
+      <nav class="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
         <a href="${base}legal.html" class="hover:text-brand-500 hover:underline">特定商取引法に基づく表示</a>
+        <a href="${base}privacy.html" class="hover:text-brand-500 hover:underline">プライバシーポリシー</a>
+        <a href="${base}terms.html" class="hover:text-brand-500 hover:underline">利用規約</a>
       </nav>
       <p class="mt-3">© ${new Date().getFullYear()} Solo Shop. All rights reserved.</p>
     </footer>

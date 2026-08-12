@@ -96,7 +96,23 @@ npm run build:css    # tailwind.config.js と assets/css/tailwind-src.css から
 | 店主（管理者） | owner@soloshop.example.com | Owner@12345 |
 | 一般会員 | demo@soloshop.example.com | Demo@12345 |
 
-本番運用時は `.env` の `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` / `ADMIN_PASSWORD` を必ず変更してください。また、`frontend/legal.html`（特定商取引法に基づく表示）の【 】内も実際の情報に置き換えてから公開してください。
+本番運用時は `.env` の `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` / `ADMIN_PASSWORD` を必ず変更してください。
+
+### 公開前に書き換えるページ
+
+以下の3ページはテンプレートです。**【 】内を実際の情報に置き換えてから公開してください。**
+
+| ファイル | 内容 |
+|---|---|
+| `frontend/legal.html` | 特定商取引法に基づく表示（通信販売を行う場合は法定の表示事項） |
+| `frontend/privacy.html` | プライバシーポリシー |
+| `frontend/terms.html` | 利用規約 |
+
+プライバシーポリシーの本文は、**このサイトが実際に取得・保存・委託している情報にあわせて記載してあります**（会員情報、注文の記録、決済代行・メール送信・配送業者への委託、ブラウザに保存する情報など）。運営方法を変えた場合は、記載も合わせて見直してください。
+
+利用規約の第5条には、**支払いのないご注文を自動的に取り消す時間**を記載しています。`PAYMENT_HOLD_MINUTES` を変更した場合は、規約の記載も必ず合わせてください（記載と実際の動作が食い違うとトラブルの原因になります）。第6条の送料も同様です。
+
+これらは法令に関わる内容のため、公開前に専門家の確認を受けることをおすすめします。
 
 ## 本番運用（参考）
 
