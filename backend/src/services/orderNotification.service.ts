@@ -98,6 +98,8 @@ export function notifyOwnerOrderPaid(orderId: string): void {
     if (!order || !ownerEmail) return;
     sendMailInBackground({
       to: ownerEmail,
+      // そのまま返信すれば購入者に届くようにしておく（発送の連絡や在庫の相談に使える）
+      replyTo: order.user.email,
       subject: `【Solo Shop】新しいご注文がありました（${order.orderNo}）`,
       text: [
         'お支払いが完了した注文があります。発送をお願いします。',
@@ -130,6 +132,7 @@ export function notifyOwnerPaymentNeedsAttention(orderId: string, paymentId: str
     if (!order || !ownerEmail) return;
     sendMailInBackground({
       to: ownerEmail,
+      replyTo: order.user.email,
       subject: `【Solo Shop】要確認: 取り消し済みの注文に入金がありました（${order.orderNo}）`,
       text: [
         'お支払い期限が過ぎて取り消した注文に、入金が確認されました。',

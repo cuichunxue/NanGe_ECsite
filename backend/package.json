@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",
+    "mail:check": "tsx src/scripts/mailCheck.ts",
     "test": "vitest run",
     "lint": "eslint src --ext .ts"
   },

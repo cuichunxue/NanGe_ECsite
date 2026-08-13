@@ -49,6 +49,16 @@ export const env = {
     pass: process.env.SMTP_PASS ?? '',
   },
   mailFrom: process.env.MAIL_FROM ?? '',
+  // 購入者が返信したときの宛先。noreply@ から送る場合でも問い合わせを受け取れるようにする。
+  // 未設定なら OWNER_EMAIL を使う。
+  mailReplyTo: process.env.MAIL_REPLY_TO ?? '',
+  // 送信ドメイン認証(DKIM)。通常は送信サービス側が署名するため設定不要。
+  // 自前のメールサーバーなど、署名されない経路で送るときだけ鍵を設定する。
+  // セレクタだけの設定でも、`npm run mail:check` でDNSの公開鍵を確認できる。
+  mailDkim: {
+    selector: process.env.MAIL_DKIM_SELECTOR ?? '',
+    privateKey: (process.env.MAIL_DKIM_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+  },
   // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
   ownerEmail: process.env.OWNER_EMAIL ?? '',
 
