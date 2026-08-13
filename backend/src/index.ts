@@ -1,7 +1,11 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './config/prisma';
+import { reportStartupIssues } from './config/startupCheck';
 import { startOrderCleanup } from './services/orderCleanup.service';
+
+// 設定の取り違えは、開店してから購入者の不便として現れる。起動時に確認する。
+if (!reportStartupIssues()) process.exit(1);
 
 const app = createApp();
 

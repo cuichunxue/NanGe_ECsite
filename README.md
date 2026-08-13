@@ -30,6 +30,7 @@
 ```
 NanGe_ECsite/
 ├── docs/requirements.md   # 要件定義書
+├── deploy/                 # 本番運用の設定（nginx / systemd / バックアップ）
 ├── backend/                # Express API サーバー
 │   ├── prisma/schema.prisma
 │   ├── prisma/seed.ts
@@ -67,7 +68,7 @@ npm run dev                  # http://localhost:4000
 
 ### 3. フロントエンド
 
-ビルド不要の素のHTML/JavaScriptです。`frontend/assets/js/config.js` の `API_BASE_URL` がバックエンドのURL（既定値 `http://localhost:4000/api`）を指しているため、バックエンドの `CORS_ORIGIN` は下記サーバーの既定ポート `http://localhost:5173` のままで動作します。
+ビルド不要の素のHTML/JavaScriptです。`frontend/assets/js/config.js` は、5173番ポートで開いているときだけ開発用バックエンド（`http://localhost:4000/api`）を見るようになっているため、そのまま動きます。バックエンドの `CORS_ORIGIN` も既定の `http://localhost:5173` のままで構いません。
 
 ```bash
 cd frontend
@@ -115,20 +116,168 @@ npm run build:css    # tailwind.config.js と assets/css/tailwind-src.css から
 
 これらは法令に関わる内容のため、公開前に専門家の確認を受けることをおすすめします。
 
-## 本番運用（参考）
+## 本番運用
+
+1台のサーバー（月1,000円程度のVPSで十分）に、次の3つを置く構成を想定しています。設定ファイルは `deploy/` にあります。
+
+```
+インターネット
+   │  HTTPS
+   ▼
+ nginx  ── 購入者向けサイト（frontend/ の静的ファイル）を配信
+   │    └ /api と /uploads は下のNode.jsへ渡す
+   ▼
+ Node.js（systemdで常時起動。落ちても自動で復帰）
+   │
+   ▼
+ PostgreSQL
+```
+
+| ファイル | 役割 |
+|---|---|
+| `deploy/nginx.conf.example` | HTTPS・静的配信・APIへの転送 |
+| `deploy/soloshop-api.service` | APIを常時起動させる（systemd） |
+| `deploy/backup.sh` / `deploy/restore.sh` | バックアップと復元 |
+| `deploy/soloshop-backup.service` / `.timer` | 毎日のバックアップ |
+
+### 1. 置く・動かす
 
 ```bash
-# バックエンド
-cd backend
-npm install
-npm run build
-npm run prisma:migrate   # prisma migrate deploy
-npm start                 # node dist/index.js
+sudo mkdir -p /var/www/soloshop && sudo chown -R $USER /var/www/soloshop
+git clone <このリポジトリ> /var/www/soloshop
+cd /var/www/soloshop/backend
 
-# フロントエンド（ビルド不要。frontend/ 配下を任意のWebサーバー・CDNでそのまま配信する）
-# 配信前に assets/js/config.js の API_BASE_URL を本番バックエンドのURLに変更すること
-cd frontend
-npm start                  # 動作確認用に簡易サーバーで配信する場合
+cp .env.example .env      # 中身を本番用に書き換える（次の項目を参照）
+npm ci
+npm run build             # dist/ を作る
+npm run prisma:migrate    # データベースの構造を作る・更新する
+npm run seed              # 最初の1回だけ。店主アカウントとサンプル商品が入る
+```
+
+### 2. `.env` で必ず書き換えるもの
+
+```bash
+NODE_ENV="production"
+DATABASE_URL="postgresql://soloshop:強いパスワード@localhost:5432/soloshop?schema=public"
+
+# 秘密鍵は必ず作り直す（設定例のままだと、誰でも管理者になりすませます）
+JWT_ACCESS_SECRET="openssl rand -base64 48 で作った値"
+JWT_REFRESH_SECRET="openssl rand -base64 48 で作った別の値"
+
+SITE_URL="https://shop.example.com"        # メールに載せるリンクの基点
+PUBLIC_API_URL="https://shop.example.com"  # 商品写真のURLの組み立てに使う
+CORS_ORIGIN="https://shop.example.com"
+TRUST_PROXY=1                              # nginxを前に置くため必須（下記参照）
+```
+
+`PUBLIC_API_URL` の設定漏れには特に注意してください。**間違ったURLのままアップロードした商品写真は、そのURLごとデータベースに保存されるため、後から設定を直しても直りません。**
+
+本番として起動すると、これらの設定は起動時に点検されます。秘密鍵が設定例のままなら**起動しません**。その他の設定漏れは警告として表示されます。
+
+```
+[設定エラー] JWT_ACCESS_SECRET が設定例のままです。誰でも管理者になりすませる状態のため起動を中止します。
+[設定の確認] PUBLIC_API_URL が開発用のままです。この状態でアップロードした商品写真は、購入者から見えないURLで保存されます
+```
+
+### 3. 常時起動させる（systemd）
+
+ターミナルで `npm start` したままにすると、接続を切った時点で店が閉まってしまいます。サーバーの再起動後も自動で立ち上がるよう、systemd に任せます。
+
+```bash
+sudo cp deploy/soloshop-api.service /etc/systemd/system/
+sudo nano /etc/systemd/system/soloshop-api.service   # ユーザー名・パス・nodeの場所を自分の環境に合わせる
+sudo systemctl daemon-reload
+sudo systemctl enable --now soloshop-api
+
+sudo systemctl status soloshop-api    # 動いているか
+sudo journalctl -u soloshop-api -f    # ログを見る
+```
+
+### 4. HTTPSで公開する（nginx + Let's Encrypt）
+
+**HTTPSは必須です。** 平文のHTTPでは、ログインのパスワードも住所も、通信経路の途中で読まれます。証明書は無料で取得でき、更新も自動化できます。
+
+```bash
+sudo apt install nginx certbot python3-certbot-nginx
+
+sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/soloshop
+sudo nano /etc/nginx/sites-available/soloshop     # ドメイン名とパスを書き換える
+sudo ln -s /etc/nginx/sites-available/soloshop /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+sudo certbot --nginx -d shop.example.com          # 証明書を取得（更新は自動）
+sudo systemctl status certbot.timer               # 自動更新が有効か確認
+```
+
+購入者向けサイトとAPIを同じドメインで配信するため、`frontend/assets/js/config.js` の書き換えは不要です（同じドメインの `/api` を見るようになっています）。
+
+設定に含めている要点:
+
+- **HTTPは自動でHTTPSへ転送**し、証明書の更新に使う経路だけは転送しない
+- **`client_max_body_size 6m`** — 既定の1MBのままだと、商品写真のアップロードが途中で切られます
+- HTMLとJS/CSSは毎回更新を確認させ、**サイトを更新したのに古い画面が表示され続ける事故を防ぐ**（変わっていなければ通信量はほぼゼロです）
+- HSTS などのセキュリティヘッダ
+
+**`TRUST_PROXY=1` を `.env` に設定してください。** nginxを前に置くと、設定しない限り全ての訪問者が同じIPアドレス（nginx自身）として扱われます。レート制限は本来「訪問者ごと」にかかりますが、この状態では**サイト全体で1つの枠を共有**することになり、アクセスが集中したときに訪問者全員が閲覧できなくなります。
+
+逆に、Node.jsをインターネットに直接公開している場合は未設定のままにしてください。設定すると、リクエストヘッダを詐称してレート制限を回避されます。
+
+### 5. バックアップ（最重要）
+
+失うと取り返しがつかないものが2つあります。**両方を一緒に**保存してください。
+
+1. **データベース** — 注文・会員・商品。消えると売上の記録ごと無くなります
+2. **`backend/uploads/`** — 商品写真。撮り直しがきかないものもあります
+
+```bash
+sudo mkdir -p /var/backups/soloshop && sudo chown $USER /var/backups/soloshop
+./deploy/backup.sh                 # 手動で1回
+BACKUP_DIR=/mnt/usb ./deploy/backup.sh   # 保存先を変える
+```
+
+毎日自動で取るには、systemdのタイマーを使います（既定で毎日3:30、14日分を保持）。
+
+```bash
+sudo cp deploy/soloshop-backup.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now soloshop-backup.timer
+systemctl list-timers soloshop-backup    # 次回の実行予定
+```
+
+**保存先はこのサーバーの外にも置いてください。** 同じディスクに置いたバックアップは、ディスクが壊れたときに一緒に失われます。外付けディスクや、別のサーバー・クラウドストレージへ定期的にコピーしてください。
+
+#### 戻し方
+
+```bash
+./deploy/restore.sh                  # 保存されている一覧を表示（何も壊しません）
+./deploy/restore.sh 20260813-033000  # その時点に戻す
+```
+
+**バックアップは「戻せて初めて」バックアップです。** 本番で慌てて初めて試すことにならないよう、一度は練習してください。練習用の別のデータベースへ戻せば、本番に触れずに確かめられます。
+
+```bash
+sudo -u postgres createdb soloshop_restore_test
+TARGET_DATABASE_URL="postgresql://soloshop:パスワード@localhost:5432/soloshop_restore_test" \
+  UPLOAD_DIR=/tmp/restore-test ./deploy/restore.sh 20260813-033000
+```
+
+### 6. 更新のしかた
+
+```bash
+cd /var/www/soloshop
+./deploy/backup.sh              # 先にバックアップ
+git pull
+cd backend && npm ci && npm run build && npm run prisma:migrate
+sudo systemctl restart soloshop-api
+```
+
+購入者向けサイト（`frontend/`）はビルド不要で、`git pull` すればそのまま反映されます。ただし CSS を変更した場合は `cd frontend && npm run build:css` を実行してください。
+
+### 動作の確認
+
+```bash
+curl https://shop.example.com/api/health        # プロセスが応答するか
+curl https://shop.example.com/api/health/ready  # データベースまで届いているか
 ```
 
 ### 消費税とインボイス（適格請求書）
@@ -339,18 +488,6 @@ v=DMARC1; p=none; rua=mailto:あなたのアドレス
 - **`include:` を足しすぎる** — SPFはDNS参照10回までという上限があり、超えると失敗します（`npm run mail:check` が入れ子も含めて数えます）
 - **`~all` を書き忘れる／`+all` にする** — どのサーバーからの送信も許可することになり、なりすまし対策になりません
 - **ドメインを変えたのに設定を直し忘れる** — 送信サービスやドメインを変えたときは、もう一度 `npm run mail:check` を実行してください
-
-### リバースプロキシ配下で動かす場合（重要）
-
-nginx や Cloudflare などを前段に置く場合は、`backend/.env` に `TRUST_PROXY` を設定してください。
-
-```bash
-TRUST_PROXY=1   # プロキシ1段。Cloudflare + nginx のように2段なら 2
-```
-
-設定しないと、全ての訪問者がプロキシのIPアドレスとして扱われます。レート制限は本来「訪問者ごと」にかかりますが、この状態では**サイト全体で1つの枠を共有**することになり、アクセスが集中した際に訪問者全員が閲覧できなくなります。
-
-逆に、バックエンドをインターネットに直接公開している場合は未設定のままにしてください。設定すると、リクエストヘッダを詐称してレート制限を回避されます。
 
 ## テスト
 

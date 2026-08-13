@@ -1,0 +1,19 @@
+# 毎日バックアップを取る
+#
+# 置き場所: /etc/systemd/system/soloshop-backup.timer
+#   sudo systemctl enable --now soloshop-backup.timer
+#   systemctl list-timers soloshop-backup     # 次回の実行予定を確認
+
+[Unit]
+Description=Solo Shop のバックアップを毎日実行する
+
+[Timer]
+# 注文の少ない時間帯に。時刻はサーバーの時刻設定に従う。
+OnCalendar=*-*-* 03:30:00
+# サーバーが停止していて実行できなかった場合は、起動後に実行する
+Persistent=true
+# 他の処理と重ならないよう、実行時刻を少しずらす
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

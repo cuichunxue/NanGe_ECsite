@@ -1,0 +1,60 @@
+# Solo Shop APIサーバーを常時起動させる（systemd）
+#
+# サーバーを再起動しても、プログラムが落ちても、自動で起き上がるようにする。
+# ターミナルで `npm start` したまま運用すると、接続を切った時点で店が閉まってしまう。
+#
+# 置き場所: /etc/systemd/system/soloshop-api.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now soloshop-api
+#   sudo systemctl status soloshop-api      # 動いているか確認
+#   sudo journalctl -u soloshop-api -f      # ログを見る
+#
+# 「soloshop」ユーザーと「/var/www/soloshop」は自分の環境に合わせて書き換えること。
+
+[Unit]
+Description=Solo Shop API
+Documentation=https://github.com/cuichunxue/NanGe_ECsite
+After=network-online.target postgresql.service
+Wants=network-online.target
+# 短時間に繰り返し落ちる場合は、あきらめて止める（起動できない状態で回り続けないため）
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=soloshop
+Group=soloshop
+WorkingDirectory=/var/www/soloshop/backend
+
+# 設定は backend/.env から読み込まれる（アプリ側で dotenv を使っているため、
+# systemd の EnvironmentFile は不要。引用符の扱いの違いで悩まずに済む）。
+Environment=NODE_ENV=production
+# node の場所は環境によって違う。`which node` で確認して書き換えること。
+ExecStart=/usr/bin/node dist/index.js
+
+# 落ちても起き上がる
+Restart=always
+RestartSec=5s
+
+# 終了要求から10秒待って、応じなければ強制終了する
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=soloshop-api
+
+# --- 安全側の制限 ---
+# 万一APIに侵入されても、被害がこのアプリの範囲を超えないようにする。
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+# 書き込みを許すのは商品写真の保存先だけ（UPLOAD_DIR を変えたらここも合わせる）
+ReadWritePaths=/var/www/soloshop/backend/uploads
+
+[Install]
+WantedBy=multi-user.target
