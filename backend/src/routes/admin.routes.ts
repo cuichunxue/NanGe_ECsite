@@ -71,6 +71,14 @@ router.patch(
   '/users/:id/status',
   validate(z.object({ params: idParamSchema.shape.params, body: z.object({ status: z.enum(['ACTIVE', 'SUSPENDED']) }) })),
   catchAsync(async (req, res) => {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) throw ApiError.notFound('会員が見つかりません');
+    // 管理画面から新たな管理者を作成する手段が無いため、店主(ADMIN)を凍結すると
+    // 誰もログインできなくなり、データベースを直接操作しない限り復旧できない。
+    // 一覧画面ではADMIN行にボタンを出していないが、API単体でも必ず拒む。
+    if (target.role === 'ADMIN') {
+      throw ApiError.badRequest('店主のアカウントを凍結することはできません', 'CANNOT_SUSPEND_ADMIN');
+    }
     const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: req.body.status } });
     if (req.body.status === 'SUSPENDED') {
       // 凍結を即座に有効化するため、既存のリフレッシュトークンを全て失効させる

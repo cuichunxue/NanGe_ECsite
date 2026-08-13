@@ -168,13 +168,27 @@ export async function markOrderPaid(orderId: string, paymentId: string) {
  * 返金の完了を記録する。Webhookからのみ呼ばれる。
  * 店主が管理画面で返金操作をした時点ではKOMOJUへ依頼するだけで、
  * 実際に返金が成立したことはこの通知で確定させる。
+ *
+ * KOMOJUの管理画面から直接返金された場合も、この通知だけを頼りに確定させることになる。
+ * そのため adminUpdateStatus と同じ判断（発送前の返金だけ在庫を戻す）をここでも行う。
  */
 export async function markOrderRefunded(orderId: string) {
-  const updated = await prisma.order.updateMany({
-    where: { id: orderId, status: { in: ['PAID', 'SHIPPED', 'COMPLETED'] } },
-    data: { status: 'REFUNDED', refundedAt: new Date() },
+  return prisma.$transaction(async (tx) => {
+    const fromPaid = await tx.order.updateMany({
+      where: { id: orderId, status: 'PAID' },
+      data: { status: 'REFUNDED', refundedAt: new Date() },
+    });
+    if (fromPaid.count > 0) {
+      // 発送していないため、代金を返した分だけ在庫を戻す
+      await restoreStock(tx, orderId);
+      return true;
+    }
+    const fromShippedOrCompleted = await tx.order.updateMany({
+      where: { id: orderId, status: { in: ['SHIPPED', 'COMPLETED'] } },
+      data: { status: 'REFUNDED', refundedAt: new Date() },
+    });
+    return fromShippedOrCompleted.count > 0;
   });
-  return updated.count > 0;
 }
 
 /** 取り消された注文の在庫を売り場へ戻す。状態遷移に成功したときだけ呼ぶこと。 */
@@ -225,6 +239,9 @@ export async function confirmReceipt(userId: string, orderId: string) {
 const ADMIN_TRANSITIONS: Record<string, string[]> = {
   PAID: ['SHIPPED', 'REFUNDED'],
   SHIPPED: ['COMPLETED', 'REFUNDED'],
+  // 利用規約で「商品到着後の不良・誤配送は返金・交換に応じる」と案内しているため、
+  // 受取完了後も返金できる経路を残す。届いた後の返品も現実には起こりうる。
+  COMPLETED: ['REFUNDED'],
   // 代金引換は商品と引き換えに支払われるため、支払い待ちのまま発送する。
   // オンライン決済の注文は入金前に発送させない（下の isCashOnDelivery で判定）。
   PENDING_PAYMENT: ['CANCELLED', 'SHIPPED'],
@@ -287,7 +304,13 @@ export async function adminUpdateStatus(orderId: string, nextStatus: string, shi
     // 店主が未払いの注文を取り消した場合も、購入者が自分で取り消したときと同じく
     // 在庫を戻す。戻さないと、支払われなかった注文の分だけ在庫が減ったままになり、
     // 一点物では二度と売れなくなってしまう。
-    if (nextStatus === 'CANCELLED') {
+    //
+    // 発送前(PAID)の返金も同様に在庫を戻す。商品を送っていないのに在庫だけ
+    // 減ったままでは、代金を返した一点物が二度と売れなくなってしまう。
+    // 一方、発送後(SHIPPED/COMPLETED)の返金は、返送された商品が実際に
+    // 再販できる状態かどうかを店主が確認する必要があるため自動では戻さない。
+    // 戻す場合は在庫調整(stock-adjust)から手動で行う。
+    if (nextStatus === 'CANCELLED' || (nextStatus === 'REFUNDED' && order.status === 'PAID')) {
       await restoreStock(tx, orderId);
     }
   });

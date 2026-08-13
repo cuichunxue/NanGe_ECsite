@@ -20,6 +20,17 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     });
   }
 
+  // リクエストのJSONが壊れている場合。body-parserがexpress.json()の中で投げる
+  // SyntaxErrorで、クライアント側の入力不備でしかない（サーバーの不具合ではない）。
+  // 判定せずに下の catch-all まで落とすと500として扱われ、ログにも「内部エラー」として
+  // 記録されてしまい、運営者が実際のサーバー障害と区別できなくなる。
+  if (err instanceof SyntaxError && (err as SyntaxError & { type?: string; status?: number }).type === 'entity.parse.failed') {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'INVALID_JSON', message: 'リクエストの形式が正しくありません' },
+    });
+  }
+
   // 添付ファイルの制限に引っかかった場合。原因が分からないと運営者は
   // 「サイトが壊れた」と受け取ってしまうため、何をすればよいかを返す。
   if (err instanceof MulterError) {
@@ -57,6 +68,16 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
       return res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: '対象データが見つかりません' },
+      });
+    }
+    if (err.code === 'P2003') {
+      // 参照先が存在しないIDを指定した場合（例: 削除済み・存在しないカテゴリIDで商品を作成）。
+      // 運営者の入力ミスであり、サーバーの不具合ではないため404として返す。
+      const field = String(err.meta?.field_name ?? '');
+      const label = field.includes('categoryId') ? 'カテゴリ' : '関連データ';
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: `指定された${label}が見つかりません` },
       });
     }
   }

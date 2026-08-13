@@ -17,7 +17,9 @@ if (requireAdmin('../')) {
     if (o.status === 'PENDING_PAYMENT') {
       return o.paymentMethod === 'COD' ? ['SHIPPED', 'CANCELLED'] : ['CANCELLED'];
     }
-    return { PAID: ['SHIPPED', 'REFUNDED'], SHIPPED: ['COMPLETED', 'REFUNDED'], COMPLETED: [], CANCELLED: [], REFUNDED: [] }[o.status] ?? [];
+    // 受取完了後でも、届いた商品に不良があった場合などのために返金を残す
+    // （利用規約に記載している「不良・誤配送は返金・交換に応じる」に対応する）。
+    return { PAID: ['SHIPPED', 'REFUNDED'], SHIPPED: ['COMPLETED', 'REFUNDED'], COMPLETED: ['REFUNDED'], CANCELLED: [], REFUNDED: [] }[o.status] ?? [];
   }
 
   const params = new URLSearchParams(location.search);
