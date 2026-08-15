@@ -30,7 +30,11 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.corsOrigin.split(',').map((s) => s.trim()),
+      // 本番は CORS_ORIGIN の許可リストに厳密に絞る。開発中は、Codespaces/Gitpod等の
+      // クラウド開発環境が発行する転送URLが起動のたびに変わり得るため、送信元をそのまま
+      // 許可する（`origin: true` はcorsパッケージの機能で、Originヘッダをそのまま反映する。
+      // 実運用のデータを扱わない開発時のみの挙動であり、本番には影響しない）。
+      origin: env.isProd ? env.corsOrigin.split(',').map((s) => s.trim()) : true,
       credentials: true,
     }),
   );

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from './app';
 
@@ -58,5 +58,62 @@ describe('壊れたJSONボディ', () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('INVALID_JSON');
+  });
+});
+
+describe('CORS', () => {
+  const ORIGINAL_ENV = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+    vi.resetModules();
+  });
+
+  it('開発時は、Codespaces/Gitpod等の転送URLのように事前に分からない送信元も許可する', async () => {
+    process.env.NODE_ENV = 'development';
+    vi.resetModules();
+    const { createApp: createDevApp } = await import('./app');
+    const app = createDevApp();
+
+    const res = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'https://foo-5173.app.github.dev')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(res.headers['access-control-allow-origin']).toBe('https://foo-5173.app.github.dev');
+  });
+
+  it('本番は CORS_ORIGIN の許可リストに無い送信元を拒む', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CORS_ORIGIN = 'https://shop.example.com';
+    process.env.JWT_ACCESS_SECRET = 'a'.repeat(48);
+    process.env.JWT_REFRESH_SECRET = 'b'.repeat(48);
+    vi.resetModules();
+    const { createApp: createProdApp } = await import('./app');
+    const app = createProdApp();
+
+    const res = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'https://evil.example.com')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('本番でも CORS_ORIGIN に含まれる送信元は許可する', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CORS_ORIGIN = 'https://shop.example.com';
+    process.env.JWT_ACCESS_SECRET = 'a'.repeat(48);
+    process.env.JWT_REFRESH_SECRET = 'b'.repeat(48);
+    vi.resetModules();
+    const { createApp: createProdApp } = await import('./app');
+    const app = createProdApp();
+
+    const res = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'https://shop.example.com')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(res.headers['access-control-allow-origin']).toBe('https://shop.example.com');
   });
 });

@@ -161,7 +161,7 @@
 - NFR-030 TypeScriptによる型安全な実装（バックエンド）
 - NFR-031 レイヤードアーキテクチャ（routes / services / prisma）で関心分離
 - NFR-032 Prisma ORMによるスキーマ管理・マイグレーション
-- NFR-033 npmスクリプトによりローカル/本番環境のセットアップ手順を統一（`npm install` → `prisma migrate` → `npm run build`/`start`）
+- NFR-033 npmスクリプトによりローカル/本番環境のセットアップ手順を統一（`npm install` → `prisma migrate` → `npm run build`/`start`）。backendとfrontendはnpm workspacesでまとめ、リポジトリ直下からの一括インストール・起動（`npm install` → `npm run dev`）に対応すること。backendのPrisma Clientは`postinstall`で自動生成し、生成し忘れによる起動失敗を防ぐこと
 
 ### 3.5 可用性・運用性
 - NFR-040 ヘルスチェックエンドポイント `/api/health`（liveness: プロセス応答確認）/ `/api/health/ready`（readiness: DB疎通確認込み）
@@ -171,6 +171,7 @@
 - NFR-044 購入者向けサイトはHTTPSで配信し、HTTPでのアクセスはHTTPSへ転送すること。リバースプロキシは商品写真のアップロード上限（5MB）を通せる本文サイズ上限を設定すること
 - NFR-045 バックアップはデータベースと商品写真(`backend/uploads/`)を同時に取得し、取得したファイルが読み取り可能であることを確認すること。復元手段を提供し、本番に影響を与えずに復元を試せること（保持期間を過ぎた古いバックアップの削除は、残るバックアップが存在する場合のみ行う）
 - NFR-046 本番として起動する際は設定を点検し、秘密鍵が設定例のままなど致命的な誤りがある場合は起動を中止すること。商品写真のURLの基点(`PUBLIC_API_URL`)のように、誤った状態で保存すると後から訂正できない設定は警告として知らせること
+- NFR-047 GitHub Codespaces / Gitpod のような、ポート番号をホスト名に埋め込んで転送するクラウド開発環境で追加設定なしに動作すること。frontendはホスト名からbackendの転送先URLを推測し、backendのCORSは本番以外では送信元をそのまま許可すること（転送URLは起動のたびに変わり得るため、`CORS_ORIGIN` を毎回設定させない）。本番(`NODE_ENV=production`)ではこの緩和を行わず、`CORS_ORIGIN` の許可リストのみを厳密に見ること
 
 ---
 

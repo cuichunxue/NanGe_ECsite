@@ -29,6 +29,7 @@
 
 ```
 NanGe_ECsite/
+├── package.json            # ルート。npm workspaces で backend/frontend をまとめて操作する
 ├── docs/requirements.md   # 要件定義書
 ├── deploy/                 # 本番運用の設定（nginx / systemd / バックアップ）
 ├── backend/                # Express API サーバー
@@ -43,7 +44,7 @@ NanGe_ECsite/
     └── server.js            # 依存パッケージ不要の開発用静的サーバー
 ```
 
-本プロジェクトはコンテナ基盤（Docker等）を使わず、Node.js / PostgreSQLをホストに直接インストールして動かす構成です。
+本プロジェクトはコンテナ基盤（Docker等）を使わず、Node.js / PostgreSQLをホストに直接インストールして動かす構成です。`backend/` と `frontend/` は npm workspaces でまとめられており、依存パッケージのインストールと起動はリポジトリ直下から一括で行えます。
 
 ## セットアップ（開発環境）
 
@@ -55,27 +56,48 @@ createuser soloshop --pwprompt
 createdb soloshop -O soloshop
 ```
 
-### 2. バックエンド
+### 2. 依存パッケージのインストール
+
+リポジトリ直下（このファイルがある場所）で一度だけ実行します。`backend` と `frontend` 両方の依存パッケージがまとめてインストールされ、Prisma Client も自動生成されます（`backend` の `postinstall` フックによる）。
 
 ```bash
-cd backend
-cp .env.example .env   # 必要に応じて値を編集（DATABASE_URL, JWTシークレット等）
 npm install
-npm run prisma:migrate:dev   # マイグレーション適用
-npm run seed                 # サンプルデータ投入（店主/デモ会員/商品/カテゴリ）
-npm run dev                  # http://localhost:4000
 ```
 
-### 3. フロントエンド
-
-ビルド不要の素のHTML/JavaScriptです。`frontend/assets/js/config.js` は、5173番ポートで開いているときだけ開発用バックエンド（`http://localhost:4000/api`）を見るようになっているため、そのまま動きます。バックエンドの `CORS_ORIGIN` も既定の `http://localhost:5173` のままで構いません。
+### 3. バックエンドの設定とマイグレーション
 
 ```bash
-cd frontend
-npm run dev                  # http://localhost:5173 で静的配信（依存パッケージ不要）
+cp backend/.env.example backend/.env   # 必要に応じて値を編集（DATABASE_URL, JWTシークレット等）
+npm run prisma:migrate:dev             # マイグレーション適用
+npm run seed                           # サンプルデータ投入（店主/デモ会員/商品/カテゴリ）
 ```
 
-`npm run dev` は Node.js 標準機能のみで実装した簡易サーバー（`server.js`）を起動します。任意の静的ファイルサーバー（`npx serve`、`python -m http.server` 等）でも代替可能です。
+### 4. 起動
+
+```bash
+npm run dev                  # backend(:4000) と frontend(:5173) を同時に起動する
+```
+
+`frontend/assets/js/config.js` は、5173番ポートで開いているときだけ開発用バックエンド（`http://localhost:4000/api`）を見るようになっているため、そのまま動きます。バックエンドの `CORS_ORIGIN` も既定の `http://localhost:5173` のままで構いません。
+
+#### GitHub Codespaces / Gitpod など、クラウド開発環境で開く場合
+
+`localhost` に直接アクセスできず、ポート番号をホスト名に埋め込んだ転送URL（例: `https://foo-5173.app.github.dev`）を経由してブラウザからアクセスする環境では、追加の設定なしで動くように以下の対応をしてあります。
+
+- `frontend/assets/js/config.js` は、ホスト名に含まれる `5173` を `4000` に置き換えたURLをバックエンドとして自動的に使う（例: `https://foo-5173.app.github.dev` → `https://foo-4000.app.github.dev`）
+- バックエンドのCORSは、開発時（`NODE_ENV=production` でないとき）は送信元をそのまま許可する。転送URLは起動のたびに変わり得るため、`CORS_ORIGIN` を毎回設定しなくてよいようにしている（本番ではこの緩和は行わず、`CORS_ORIGIN` の許可リストのみを厳密に見る）
+
+ブラウザから4000番ポート（バックエンド）にも5173番ポート（フロントエンド）と同様にアクセスできるよう、環境側でポートを公開設定にしてください（Codespacesの場合は「ポート」パネルで両方のポートを Public にするか、少なくとも同じ可視性に揃える）。
+
+片方だけ起動したい場合や、個別にコマンドを実行したい場合は、ワークスペース名を指定するか該当ディレクトリに `cd` してください。
+
+```bash
+npm run dev:backend          # backendのみ（tsx watch）
+npm run dev:frontend         # frontendのみ（静的配信）
+npm test                     # backendのテスト一式（vitest）
+npm run seed -w backend      # -w <ワークスペース名> でその workspace 内のスクリプトを実行
+cd backend && npm run mail:check   # cd してから直接実行してもよい
+```
 
 ### スタイル(CSS)の変更
 
@@ -84,8 +106,6 @@ npm run dev                  # http://localhost:5173 で静的配信（依存パ
 配色を変えたい、または新しいTailwindのクラス名を使い始めたときだけ、再生成してください。
 
 ```bash
-cd frontend
-npm install          # 初回のみ（tailwindcss を取得）
 npm run build:css    # tailwind.config.js と assets/css/tailwind-src.css から style.css を再生成
 ```
 
@@ -145,13 +165,13 @@ npm run build:css    # tailwind.config.js と assets/css/tailwind-src.css から
 ```bash
 sudo mkdir -p /var/www/soloshop && sudo chown -R $USER /var/www/soloshop
 git clone <このリポジトリ> /var/www/soloshop
-cd /var/www/soloshop/backend
+cd /var/www/soloshop
 
-cp .env.example .env      # 中身を本番用に書き換える（次の項目を参照）
-npm ci
-npm run build             # dist/ を作る
-npm run prisma:migrate    # データベースの構造を作る・更新する
-npm run seed              # 最初の1回だけ。店主アカウントとサンプル商品が入る
+cp backend/.env.example backend/.env   # 中身を本番用に書き換える（次の項目を参照）
+npm ci                     # backend/frontend の依存パッケージをまとめてインストール
+npm run build              # backend/dist/ を作る
+npm run prisma:migrate     # データベースの構造を作る・更新する
+npm run seed                # 最初の1回だけ。店主アカウントとサンプル商品が入る
 ```
 
 ### 2. `.env` で必ず書き換えるもの
@@ -267,11 +287,11 @@ TARGET_DATABASE_URL="postgresql://soloshop:パスワード@localhost:5432/solosh
 cd /var/www/soloshop
 ./deploy/backup.sh              # 先にバックアップ
 git pull
-cd backend && npm ci && npm run build && npm run prisma:migrate
+npm ci && npm run build && npm run prisma:migrate
 sudo systemctl restart soloshop-api
 ```
 
-購入者向けサイト（`frontend/`）はビルド不要で、`git pull` すればそのまま反映されます。ただし CSS を変更した場合は `cd frontend && npm run build:css` を実行してください。
+購入者向けサイト（`frontend/`）はビルド不要で、`git pull` すればそのまま反映されます。ただし CSS を変更した場合は `npm run build:css` を実行してください。
 
 ### 動作の確認
 
@@ -433,7 +453,6 @@ SITE_URL="https://shop.example.com"   # メール本文に載せるリンクの�
 #### 確認コマンド
 
 ```bash
-cd backend
 npm run mail:check                      # 設定とDNSレコードを確認する
 npm run mail:check -- you@example.com   # 実際にテストメールを送る
 ```
@@ -492,9 +511,8 @@ v=DMARC1; p=none; rua=mailto:あなたのアドレス
 ## テスト
 
 ```bash
-cd backend
-npm test        # vitest + supertest によるAPIテスト
-npx tsc --noEmit  # 型チェック
+npm test                     # vitest + supertest によるAPIテスト
+cd backend && npx tsc --noEmit  # 型チェック
 ```
 
 フロントエンドはビルドや型チェックを必要としない素のHTML/JavaScriptです。`npm run dev` でサーバーを起動し、ブラウザで主要な画面・操作を確認してください。
