@@ -1,0 +1,32 @@
+# Codespaces / VS Code Dev Containers 用の構成。
+#
+# アプリ用とPostgreSQL用の2つのコンテナを立てる。PostgreSQLを別コンテナにすることで、
+# 開発環境側でPostgreSQLを手動インストールする必要がなくなる（sudoも不要）。
+#
+# `network_mode: service:db` により、アプリはDBとネットワークを共有する。
+# そのため backend/.env.example の DATABASE_URL（localhost:5432）を
+# 書き換えずにそのまま使える。
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    network_mode: service:db
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      # backend/.env.example の DATABASE_URL と一致させること。
+      # ここを変えるなら .env の接続先も合わせて変える必要がある。
+      POSTGRES_USER: soloshop
+      POSTGRES_PASSWORD: soloshop_password
+      POSTGRES_DB: soloshop
+    volumes:
+      # Codespaceを止めてもデータが消えないようにする
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

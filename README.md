@@ -30,6 +30,7 @@
 ```
 NanGe_ECsite/
 ├── package.json            # ルート。npm workspaces で backend/frontend をまとめて操作する
+├── .devcontainer/          # Codespaces / Dev Container の設定（PostgreSQL込みで自動構築）
 ├── docs/requirements.md   # 要件定義書
 ├── deploy/                 # 本番運用の設定（nginx / systemd / バックアップ）
 ├── backend/                # Express API サーバー
@@ -44,9 +45,23 @@ NanGe_ECsite/
     └── server.js            # 依存パッケージ不要の開発用静的サーバー
 ```
 
-本プロジェクトはコンテナ基盤（Docker等）を使わず、Node.js / PostgreSQLをホストに直接インストールして動かす構成です。`backend/` と `frontend/` は npm workspaces でまとめられており、依存パッケージのインストールと起動はリポジトリ直下から一括で行えます。
+本番はコンテナ基盤（Docker等）を使わず、Node.js / PostgreSQLをサーバーに直接インストールして動かす構成です（`deploy/` 参照）。開発環境については、Codespaces / Dev Container を使えばPostgreSQL込みで自動構築され、自分のPCに直接入れる方法も選べます。`backend/` と `frontend/` は npm workspaces でまとめられており、依存パッケージのインストールと起動はリポジトリ直下から一括で行えます。
 
 ## セットアップ（開発環境）
+
+### いちばん簡単な方法: GitHub Codespaces
+
+このリポジトリには Dev Container の設定（`.devcontainer/`）が入っています。GitHubのページから **Code → Codespaces → Create codespace** を選ぶだけで、PostgreSQLの用意・依存パッケージのインストール・データベースの作成・サンプルデータの投入まで自動で終わります。**自分でPostgreSQLを入れる必要も、`sudo` を使う必要もありません。**
+
+準備が終わったら、起動するだけです。
+
+```bash
+npm run dev
+```
+
+5173番ポートの転送URLがブラウザで開きます。**「ポート」パネルで 4000番も 5173番と同じ可視性（Public）にしてください。** 購入者向けサイトはブラウザから4000番のAPIを直接呼ぶため、片方だけ非公開だとログインできません。
+
+以下は、自分のPCに直接入れて動かす場合の手順です。
 
 ### 1. PostgreSQLを用意
 
