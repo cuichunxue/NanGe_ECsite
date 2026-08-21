@@ -10,7 +10,6 @@ if (requireAuth('')) {
 
   const user = Auth.getUser();
   let addresses = [];
-  let currentTab = 'profile';
 
   document.getElementById('profile-email').value = user.email;
   document.getElementById('profile-name').value = user.name;
@@ -23,7 +22,6 @@ if (requireAuth('')) {
   }
 
   function setTab(tab) {
-    currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach((btn) => {
       const active = btn.dataset.tab === tab;
       btn.classList.toggle('bg-brand-500', active);

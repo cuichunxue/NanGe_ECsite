@@ -72,7 +72,8 @@ async function request(method, path, { params, body, retry = false } = {}) {
     }
   }
 
-  let payload = null;
+  // 本文が空・JSONでない応答（502のHTMLなど）でも落ちないようにする
+  let payload;
   try {
     payload = await res.json();
   } catch {

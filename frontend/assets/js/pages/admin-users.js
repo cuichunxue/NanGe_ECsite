@@ -1,6 +1,6 @@
 import { initLayout, initAdminLayout } from '../layout.js';
 import { requireAdmin } from '../guards.js';
-import { adminApi } from '../api.js';
+import { adminApi, getErrorMessage } from '../api.js';
 import { formatDateTime, escapeHtml } from '../format.js';
 import { renderPagination } from '../components.js';
 import { notify } from '../notify.js';

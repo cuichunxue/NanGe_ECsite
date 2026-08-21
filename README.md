@@ -538,11 +538,17 @@ v=DMARC1; p=none; rua=mailto:あなたのアドレス
 ## テスト
 
 ```bash
-npm test                     # vitest + supertest によるAPIテスト
+npm test                        # vitest + supertest によるAPIテスト
+npm run lint                    # backend(TypeScript) と frontend(JavaScript) の静的検査
+npm run lint:fix                # 自動で直せるものを直す
 cd backend && npx tsc --noEmit  # 型チェック
 ```
 
-フロントエンドはビルドや型チェックを必要としない素のHTML/JavaScriptです。`npm run dev` でサーバーを起動し、ブラウザで主要な画面・操作を確認してください。
+フロントエンドはビルドを挟まず、素のHTML/JavaScriptをそのままブラウザへ配る作りです。そのぶん、変数名の書き間違いや import の書き忘れを見つける手段が `npm run lint` しかありません。**フロントエンドを触ったら必ず実行してください。**
+
+実際、`getErrorMessage` の import 漏れが5ファイルに残っており、カートの数量変更などが失敗したときにエラー処理そのものが落ちて、購入者に何も表示されない状態になっていました（テストも型チェックもすり抜けていました）。
+
+画面の見た目や操作感は自動では確かめられないため、`npm run dev` でサーバーを起動し、ブラウザで主要な画面・操作を確認してください。
 
 ## セキュリティ設計の要点
 

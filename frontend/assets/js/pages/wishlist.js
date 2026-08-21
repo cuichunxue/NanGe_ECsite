@@ -1,6 +1,6 @@
 import { initLayout } from '../layout.js';
 import { requireAuth } from '../guards.js';
-import { wishlistApi } from '../api.js';
+import { wishlistApi, getErrorMessage } from '../api.js';
 import { productCardHtml } from '../components.js';
 import { notify } from '../notify.js';
 

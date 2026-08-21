@@ -41,7 +41,6 @@ describe('errorHandler の分類', () => {
         return this;
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     errorHandler(err, {} as any, res as any, (() => {}) as any);
     expect(json.status).toBe(404);
     expect((json.body as { error: { code: string } }).error.code).toBe('NOT_FOUND');

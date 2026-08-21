@@ -15,14 +15,19 @@
     "build:css": "npm run build:css -w frontend",
     "start": "npm run start -w backend",
     "test": "npm run test -w backend",
-    "lint": "npm run lint -w backend",
+    "lint": "eslint .",
     "seed": "npm run seed -w backend",
     "prisma:generate": "npm run prisma:generate -w backend",
     "prisma:migrate": "npm run prisma:migrate -w backend",
     "prisma:migrate:dev": "npm run prisma:migrate:dev -w backend",
-    "mail:check": "npm run mail:check -w backend"
+    "mail:check": "npm run mail:check -w backend",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@eslint/js": "^9.39.5",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.11.0",
+    "typescript-eslint": "^8.67.0"
   }
 }

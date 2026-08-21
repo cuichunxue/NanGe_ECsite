@@ -1,7 +1,7 @@
 import { initLayout, initAdminLayout } from '../layout.js';
 import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAdmin } from '../guards.js';
-import { productApi } from '../api.js';
+import { productApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { renderPagination } from '../components.js';
 import { notify } from '../notify.js';

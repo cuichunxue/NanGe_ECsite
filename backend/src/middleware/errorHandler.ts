@@ -11,7 +11,7 @@ export function notFoundHandler(req: Request, res: Response) {
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// _next は使わないが、Expressはこの4引数の形でのみエラー処理として認識する
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({

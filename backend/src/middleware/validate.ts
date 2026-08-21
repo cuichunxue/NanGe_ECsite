@@ -60,7 +60,10 @@ function labelFor(path: ZodIssue['path']): string {
  * スキーマ側で日本語のメッセージを指定してある場合は、そちらの方が具体的なのでそのまま使う。
  */
 function toJapanese(issue: ZodIssue): string {
-  // 非ASCII文字を含む＝スキーマ側で用意した日本語メッセージ
+  // 非ASCII文字を含む＝スキーマ側で用意した日本語メッセージ。
+  // ASCIIの範囲(\x00-\x7F)を指定するために制御文字を書く必要があるため、
+  // 制御文字を禁じる検査だけここでは外す。
+  // eslint-disable-next-line no-control-regex
   if (/[^\x00-\x7F]/.test(issue.message)) return issue.message;
 
   const label = labelFor(issue.path);

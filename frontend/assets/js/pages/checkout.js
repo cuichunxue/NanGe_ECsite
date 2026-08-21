@@ -152,7 +152,9 @@ if (requireAuth('')) {
       try {
         const session = await orderApi.createPaymentSession(orderId);
         location.href = session.data.paymentUrl;
-      } catch (err) {
+      } catch {
+        // 決済ページを用意できなくても注文は「支払い待ち」で残っている。
+        // 理由は注文詳細画面で伝えるため、ここでは受け取らない。
         location.href = `order-detail.html?id=${encodeURIComponent(orderId)}&payment_error=1`;
       }
     } catch (err) {

@@ -1,7 +1,7 @@
 import { initLayout } from '../layout.js';
 import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAuth } from '../guards.js';
-import { cartApi } from '../api.js';
+import { cartApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { renderFreeShippingProgress } from '../components.js';
 import { notify } from '../notify.js';

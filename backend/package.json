@@ -15,7 +15,7 @@
     "seed": "tsx prisma/seed.ts",
     "mail:check": "tsx src/scripts/mailCheck.ts",
     "test": "vitest run",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
