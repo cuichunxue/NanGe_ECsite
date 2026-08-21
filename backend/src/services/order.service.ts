@@ -4,6 +4,7 @@ import { ApiError } from '../utils/apiError';
 import { generateOrderNo } from '../utils/orderNo';
 import { getOrCreateCart } from './cart.service';
 import { calculateShippingFee } from '../config/shipping';
+import { isOnlinePayment } from '../config/payment';
 import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid } from './orderNotification.service';
 import * as komoju from './komoju.service';
 import { env } from '../config/env';
@@ -126,7 +127,7 @@ export async function createPaymentSession(userId: string, orderId: string) {
     throw ApiError.conflict('この注文は支払い待ち状態ではありません', 'INVALID_ORDER_STATUS');
   }
   const method = order.paymentMethod;
-  if (method !== 'CREDIT_CARD' && method !== 'PAYPAY') {
+  if (!isOnlinePayment(method)) {
     throw ApiError.badRequest('この注文はオンライン決済の対象ではありません', 'NOT_ONLINE_PAYMENT');
   }
 

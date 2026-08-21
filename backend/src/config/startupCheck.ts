@@ -53,7 +53,10 @@ export function collectStartupIssues(): StartupIssue[] {
     issues.push({ level: 'warn', message: 'メールが未設定です。注文確認・発送のお知らせが購入者に届きません（内容はログにのみ出力されます）。' });
   }
   if (!env.komoju.secretKey) {
-    issues.push({ level: 'warn', message: 'KOMOJU が未設定です。クレジットカードとPayPayでの支払いはできません（代金引換のみ）。' });
+    issues.push({
+      level: 'warn',
+      message: 'KOMOJU が未設定です。クレジットカード・PayPay・WeChat Payでの支払いはできません（代金引換のみ）。',
+    });
   } else if (!env.komoju.webhookSecret) {
     issues.push({
       level: 'warn',

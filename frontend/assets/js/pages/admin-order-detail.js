@@ -3,13 +3,12 @@ import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAdmin } from '../guards.js';
 import { adminApi, getErrorMessage } from '../api.js';
 import { CARRIERS, carrierLabel, trackingUrlFor } from '../carrier.js';
+import { paymentLabel } from '../payment.js';
 import { formatDateTime, formatPrice, orderStatusColor, orderStatusLabel, escapeHtml } from '../format.js';
 
 if (requireAdmin('../')) {
   initLayout({ base: '../' });
   initAdminLayout('orders.html');
-
-  const PAYMENT_LABEL = { CREDIT_CARD: 'クレジットカード', PAYPAY: 'PayPay', COD: '代金引換' };
 
   // 代金引換は商品と引き換えに支払われるため、入金前でも発送できる。
   // オンライン決済は入金が確認できるまで発送させない。
@@ -95,7 +94,7 @@ if (requireAdmin('../')) {
 
     document.getElementById('order-total').textContent = formatPrice(order.totalAmount);
     const payEl = document.getElementById('order-payment');
-    const label = PAYMENT_LABEL[order.paymentMethod] ?? order.paymentMethod ?? '—';
+    const label = paymentLabel(order.paymentMethod) || order.paymentMethod || '—';
     payEl.textContent = order.paymentMethod === 'COD' ? `お支払い方法: ${label}（配達時に集金してください）` : `お支払い方法: ${label}`;
     payEl.className = order.paymentMethod === 'COD' ? 'text-sm font-medium text-amber-700' : 'text-sm text-gray-500';
 

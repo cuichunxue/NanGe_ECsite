@@ -3,6 +3,7 @@ import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
 import { requireAuth } from '../guards.js';
 import { orderApi, reviewApi, getErrorMessage } from '../api.js';
 import { carrierLabel, trackingUrlFor } from '../carrier.js';
+import { isOnlinePayment } from '../payment.js';
 import { formatDateTime, formatPrice, orderStatusColor, orderStatusLabel, escapeHtml } from '../format.js';
 
 if (requireAuth('')) {
@@ -149,10 +150,10 @@ if (requireAuth('')) {
     const codNote = document.getElementById('cod-note');
     codNote.classList.add('hidden');
     if (order.status === 'PENDING_PAYMENT') {
-      const isCod = order.paymentMethod === 'COD';
       // 代金引換は事前の支払い手続きがないため、支払いボタンではなく案内を出す
-      codNote.classList.toggle('hidden', !isCod);
-      document.getElementById('pay-btn').classList.toggle('hidden', isCod);
+      const payOnline = isOnlinePayment(order.paymentMethod);
+      codNote.classList.toggle('hidden', payOnline);
+      document.getElementById('pay-btn').classList.toggle('hidden', !payOnline);
       pendingActions.classList.remove('hidden');
       pendingActions.classList.add('flex');
     } else if (order.status === 'SHIPPED') {

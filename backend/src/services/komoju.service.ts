@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { env } from '../config/env';
+import { komojuTypeFor } from '../config/payment';
 import { ApiError } from '../utils/apiError';
 
 /**
@@ -16,13 +17,11 @@ import { ApiError } from '../utils/apiError';
  *   - 返金:           POST /payments/{id}/refund
  */
 
-/** 当サイトが購入者に提示する支払い方法と、KOMOJU側の呼び名の対応 */
-export const KOMOJU_PAYMENT_TYPE = {
-  CREDIT_CARD: 'credit_card',
-  PAYPAY: 'paypay',
-} as const;
-
-export type OnlinePaymentMethod = keyof typeof KOMOJU_PAYMENT_TYPE;
+/**
+ * 当サイトが購入者に提示する支払い方法と、KOMOJU側の呼び名の対応は
+ * config/payment.ts にまとめてある（画面の選択肢と食い違わないようにするため）。
+ */
+export type OnlinePaymentMethod = string;
 
 export function isKomojuConfigured(): boolean {
   return Boolean(env.komoju.secretKey);
@@ -84,6 +83,12 @@ export interface CreateSessionInput {
 }
 
 export async function createPaymentSession(input: CreateSessionInput): Promise<KomojuSession> {
+  const komojuType = komojuTypeFor(input.method);
+  if (!komojuType) {
+    // 呼び出し元で弾いているはずだが、代金引換の注文をここへ渡すと
+    // KOMOJUに空の決済手段を要求してしまうため、念のため止める。
+    throw ApiError.badRequest('この支払い方法はオンライン決済に対応していません', 'NOT_ONLINE_PAYMENT');
+  }
   return komojuRequest<KomojuSession>('/sessions', {
     mode: 'payment',
     amount: input.amount,
@@ -94,7 +99,7 @@ export async function createPaymentSession(input: CreateSessionInput): Promise<K
     // 支払いだけ成立してしまう（商品がないのに入金される）状態を避けるための余裕。
     expires_in_seconds: Math.floor((env.paymentHoldMinutes * 60) / 2),
     default_locale: 'ja',
-    payment_types: [KOMOJU_PAYMENT_TYPE[input.method]],
+    payment_types: [komojuType],
     external_customer_id: input.userId,
     line_items: input.lineItems.map((i) => ({
       description: i.name,

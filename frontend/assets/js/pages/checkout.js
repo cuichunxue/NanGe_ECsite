@@ -3,10 +3,25 @@ import { requireAuth } from '../guards.js';
 import { addressApi, cartApi, orderApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { calculateShippingFee, resolveShippingRegion, SHIPPING_REGIONS } from '../shipping.js';
+import { PAYMENT_METHODS, isOnlinePayment } from '../payment.js';
 import { renderFreeShippingProgress } from '../components.js';
 
 if (requireAuth('')) {
   initLayout({ base: '' });
+
+  // 支払い方法の選択肢を組み立てる。バックエンドが受け付ける方法と一致させるため、
+  // 画面に直接書かず payment.js の一覧から作る。
+  document.getElementById('payment-options').innerHTML = PAYMENT_METHODS.map(
+    (m, i) => `
+      <label class="flex items-start gap-2">
+        <input type="radio" name="payment" value="${escapeHtml(m.key)}" class="mt-1" ${i === 0 ? 'checked' : ''} />
+        <span>
+          ${escapeHtml(m.label)}
+          ${m.note ? `<span class="block text-xs text-gray-500">${escapeHtml(m.note)}</span>` : ''}
+        </span>
+      </label>
+    `,
+  ).join('');
 
   let cart = null;
   let addresses = [];
@@ -113,7 +128,7 @@ if (requireAuth('')) {
       });
       const orderId = res.data.id;
 
-      if (paymentMethod === 'COD') {
+      if (!isOnlinePayment(paymentMethod)) {
         location.href = `order-detail.html?id=${encodeURIComponent(orderId)}`;
         return;
       }

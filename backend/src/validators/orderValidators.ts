@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { CARRIER_KEYS } from '../config/carrier';
+import { PAYMENT_METHOD_KEYS } from '../config/payment';
 
 export const checkoutSchema = z.object({
   body: z.object({
     addressId: z.string().uuid(),
-    // CREDIT_CARD / PAYPAY はKOMOJUの決済ページへ遷移する。COD(代金引換)は現地払い。
-    paymentMethod: z.enum(['CREDIT_CARD', 'PAYPAY', 'COD']).default('CREDIT_CARD'),
+    // 選べる支払い方法は config/payment.ts にまとめてある。
+    // COD(代金引換)以外はKOMOJUの決済ページへ遷移する。
+    paymentMethod: z.enum(PAYMENT_METHOD_KEYS as [string, ...string[]]).default('CREDIT_CARD'),
     remark: z.string().max(200).optional(),
   }),
 });
