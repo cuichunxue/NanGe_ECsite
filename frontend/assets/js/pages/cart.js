@@ -4,6 +4,7 @@ import { requireAuth } from '../guards.js';
 import { cartApi } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { renderFreeShippingProgress } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAuth('')) {
   initLayout({ base: '' });
@@ -66,15 +67,27 @@ if (requireAuth('')) {
     cartApi.get().then((res) => renderCart(res.data));
   }
 
+  // 在庫切れなどで失敗したときに黙って何も起きないと、購入者は
+  // 「押しても変わらない」と受け取ってしまうため、理由を知らせる。
   async function updateQty(productId, quantity) {
     if (quantity < 1) return;
-    const res = await cartApi.updateItem(productId, quantity);
-    renderCart(res.data);
+    try {
+      const res = await cartApi.updateItem(productId, quantity);
+      renderCart(res.data);
+    } catch (err) {
+      notify(getErrorMessage(err, '数量を変更できませんでした'));
+      reload();
+    }
   }
 
   async function removeItem(productId) {
-    const res = await cartApi.removeItem(productId);
-    renderCart(res.data);
+    try {
+      const res = await cartApi.removeItem(productId);
+      renderCart(res.data);
+    } catch (err) {
+      notify(getErrorMessage(err, 'カートから削除できませんでした'));
+      reload();
+    }
   }
 
   document.getElementById('checkout-btn').addEventListener('click', () => {

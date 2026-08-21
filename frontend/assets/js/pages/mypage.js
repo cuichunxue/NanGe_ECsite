@@ -3,6 +3,7 @@ import { requireAuth } from '../guards.js';
 import { Auth } from '../auth.js';
 import { addressApi, authApi, getErrorMessage } from '../api.js';
 import { escapeHtml } from '../format.js';
+import { notify } from '../notify.js';
 
 if (requireAuth('')) {
   initLayout({ base: '' });
@@ -61,7 +62,12 @@ if (requireAuth('')) {
       .join('');
     el.querySelectorAll('[data-address-id]').forEach((row) => {
       row.querySelector('[data-action="delete-address"]').addEventListener('click', async () => {
+        try {
         await addressApi.remove(row.dataset.addressId);
+      } catch (err) {
+        notify(getErrorMessage(err, '住所を削除できませんでした'));
+        return;
+      }
         addresses = addresses.filter((a) => a.id !== row.dataset.addressId);
         renderAddresses();
       });

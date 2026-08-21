@@ -20,11 +20,13 @@
           <button id="show-address-form-btn" class="btn-secondary mt-3">+ 新しい住所を追加</button>
           <div id="address-form" class="mt-3 hidden grid-cols-2 gap-2">
             <input id="addr-recipient" class="input" placeholder="受取人名" />
-            <input id="addr-phone" class="input" placeholder="電話番号" />
-            <input id="addr-province" class="input" placeholder="都道府県" />
+            <input id="addr-phone" class="input" inputmode="tel" placeholder="電話番号" />
+            <input id="addr-postal-code" class="input" inputmode="numeric" placeholder="郵便番号（例: 1500043）" />
+            <!-- 都道府県は送料の地域区分に使うため、表記ゆれが起きない選択式にする -->
+            <select id="addr-province" class="input"></select>
             <input id="addr-city" class="input" placeholder="市区町村" />
             <input id="addr-district" class="input" placeholder="区域" />
-            <input id="addr-detail" class="input" placeholder="番地・建物名" />
+            <input id="addr-detail" class="input col-span-2" placeholder="番地・建物名" />
             <div class="col-span-2 flex gap-2">
               <button id="save-address-btn" class="btn-primary">保存</button>
               <button id="cancel-address-btn" class="btn-secondary">キャンセル</button>

@@ -4,6 +4,7 @@ import { requireAdmin } from '../guards.js';
 import { productApi } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { renderPagination } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAdmin('../')) {
   initLayout({ base: '../' });
@@ -40,10 +41,16 @@ if (requireAdmin('../')) {
       document.querySelectorAll('[data-product-id]').forEach((row) => {
         const p = res.data.find((item) => item.id === row.dataset.productId);
         row.querySelector('[data-action="toggle"]').addEventListener('click', async () => {
-          if (p.status === 'ON_SALE') {
-            await productApi.remove(p.id);
-          } else {
-            await productApi.update(p.id, { status: 'ON_SALE' });
+          // 「非公開」は論理削除（status を OFF_SHELF にする）で、商品自体は残る
+          try {
+            if (p.status === 'ON_SALE') {
+              await productApi.remove(p.id);
+            } else {
+              await productApi.update(p.id, { status: 'ON_SALE' });
+            }
+          } catch (err) {
+            notify(getErrorMessage(err, '公開状態を変更できませんでした'));
+            return;
           }
           load();
         });

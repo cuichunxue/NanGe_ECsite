@@ -3,6 +3,7 @@ import { requireAdmin } from '../guards.js';
 import { reviewApi } from '../api.js';
 import { formatDateTime, escapeHtml } from '../format.js';
 import { starRatingHtml } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAdmin('../')) {
   initLayout({ base: '../' });
@@ -30,7 +31,12 @@ if (requireAdmin('../')) {
       document.querySelectorAll('[data-review-id]').forEach((row) => {
         row.querySelector('[data-action="delete"]').addEventListener('click', async () => {
           if (!confirm('このレビューを削除しますか？')) return;
-          await reviewApi.remove(row.dataset.reviewId);
+          try {
+        await reviewApi.remove(row.dataset.reviewId);
+      } catch (err) {
+        notify(getErrorMessage(err, 'レビューを削除できませんでした'));
+        return;
+      }
           load();
         });
       });

@@ -74,9 +74,11 @@ if (requireAdmin('../')) {
     badge.textContent = orderStatusLabel[order.status];
 
     document.getElementById('address-recipient').textContent = `${order.addressSnapshot.recipient} (${order.addressSnapshot.phone})`;
+    // 郵便番号は発送ラベルに必要なので、あれば先頭に出す
+    const zip = order.addressSnapshot.postalCode ? `〒${order.addressSnapshot.postalCode} ` : '';
     document.getElementById(
       'address-detail',
-    ).textContent = `${order.addressSnapshot.province}${order.addressSnapshot.city}${order.addressSnapshot.district}${order.addressSnapshot.detail}`;
+    ).textContent = `${zip}${order.addressSnapshot.province}${order.addressSnapshot.city}${order.addressSnapshot.district}${order.addressSnapshot.detail}`;
 
     document.getElementById('order-items').innerHTML = order.items
       .map(

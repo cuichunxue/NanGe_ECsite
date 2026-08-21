@@ -125,13 +125,25 @@ document.getElementById('add-cart-btn').addEventListener('click', async () => {
 
 document.getElementById('buy-now-btn').addEventListener('click', async () => {
   if (!Auth.getUser()) return void goToLogin();
-  await cartApi.addItem(product.id, quantity);
+  // 失敗を伝えないまま止まると、購入者は最も買う気のある場面で
+  // 「押しても何も起きない」に突き当たる。
+  try {
+    await cartApi.addItem(product.id, quantity);
+  } catch (err) {
+    showMessage(getErrorMessage(err, 'カートに追加できませんでした'));
+    return;
+  }
   location.href = 'checkout.html';
 });
 
 document.getElementById('wishlist-btn').addEventListener('click', async () => {
   if (!Auth.getUser()) return void goToLogin();
-  await wishlistApi.add(product.id);
+  try {
+    await wishlistApi.add(product.id);
+  } catch (err) {
+    showMessage(getErrorMessage(err, 'お気に入りに追加できませんでした'));
+    return;
+  }
   showMessage('お気に入りに追加しました');
 });
 

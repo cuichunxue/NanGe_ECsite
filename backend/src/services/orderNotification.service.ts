@@ -123,6 +123,44 @@ export function notifyOwnerOrderPaid(orderId: string): void {
 }
 
 /**
+ * 代金引換の注文が入ったことを店主に知らせる。
+ *
+ * 代金引換はKOMOJUを通らないため入金の通知が来ない。この関数が無いと、
+ * 店主は代金引換の注文にまったく気づけず、管理画面を開くまで放置される。
+ * 注文が入ったことに気づけないのは、個人運営では最大の機会損失になる。
+ */
+export function notifyOwnerCodOrder(orderId: string): void {
+  void (async () => {
+    const [order, ownerEmail] = await Promise.all([loadOrder(orderId), resolveOwnerEmail()]);
+    if (!order || !ownerEmail) return;
+    sendMailInBackground({
+      to: ownerEmail,
+      // そのまま返信すれば購入者に届くようにしておく
+      replyTo: order.user.email,
+      subject: `【Solo Shop】新しいご注文がありました（代金引換 / ${order.orderNo}）`,
+      text: [
+        '代金引換のご注文が入りました。発送をお願いします。',
+        '代金は商品のお届け時に、配達員がお預かりします。',
+        '',
+        `注文番号: ${order.orderNo}`,
+        `ご購入者: ${order.user.name} 様（${order.user.email}）`,
+        '',
+        '【商品】',
+        formatItems(order),
+        '',
+        formatAmounts(order),
+        '',
+        '【お届け先】',
+        formatAddress(order.addressSnapshot),
+        '',
+        '管理画面から発送処理を行ってください:',
+        `${env.siteUrl}/admin/order-detail.html?id=${order.id}`,
+      ].join('\n'),
+    });
+  })().catch((err) => console.error('[mail] 代金引換の注文通知の準備に失敗しました', err));
+}
+
+/**
  * 取り消し済みの注文に入金が届いたことを店主に知らせる。
  * 商品を確保していないのに代金だけ受け取った状態なので、返金の判断が要る。
  */

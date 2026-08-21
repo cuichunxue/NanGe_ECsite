@@ -3,6 +3,7 @@ import { requireAdmin } from '../guards.js';
 import { adminApi } from '../api.js';
 import { formatDateTime, escapeHtml } from '../format.js';
 import { renderPagination } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAdmin('../')) {
   initLayout({ base: '../' });
@@ -31,7 +32,12 @@ if (requireAdmin('../')) {
       document.querySelectorAll('[data-user-id]').forEach((row) => {
         const u = res.data.find((item) => item.id === row.dataset.userId);
         row.querySelector('[data-action="toggle"]')?.addEventListener('click', async () => {
-          await adminApi.setUserStatus(u.id, u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
+          try {
+            await adminApi.setUserStatus(u.id, u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
+          } catch (err) {
+            notify(getErrorMessage(err, '会員の状態を変更できませんでした'));
+            return;
+          }
           load();
         });
       });

@@ -5,7 +5,7 @@ import { generateOrderNo } from '../utils/orderNo';
 import { getOrCreateCart } from './cart.service';
 import { calculateShippingFee } from '../config/shipping';
 import { isOnlinePayment } from '../config/payment';
-import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid } from './orderNotification.service';
+import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid, notifyOwnerCodOrder } from './orderNotification.service';
 import * as komoju from './komoju.service';
 import { env } from '../config/env';
 
@@ -106,6 +106,9 @@ export async function checkout(input: CheckoutInput) {
 
   // 通知はここまでの処理が確定してから行う。送信可否は注文の成否に影響させない。
   notifyOrderPlaced(order.id);
+  // 代金引換は入金の通知(Webhook)が来ないため、この時点で店主に知らせないと
+  // 注文が入ったことに気づけないまま放置されてしまう。
+  if (!isOnlinePayment(order.paymentMethod)) notifyOwnerCodOrder(order.id);
 
   return order;
 }

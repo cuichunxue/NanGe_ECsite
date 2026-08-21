@@ -2,6 +2,7 @@ import { initLayout } from '../layout.js';
 import { requireAuth } from '../guards.js';
 import { wishlistApi } from '../api.js';
 import { productCardHtml } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAuth('')) {
   initLayout({ base: '' });
@@ -27,7 +28,12 @@ if (requireAuth('')) {
       .join('');
     grid.querySelectorAll('[data-product-id]').forEach((el) => {
       el.querySelector('[data-action="remove"]').addEventListener('click', async () => {
+        try {
         await wishlistApi.remove(el.dataset.productId);
+      } catch (err) {
+        notify(getErrorMessage(err, 'お気に入りから外せませんでした'));
+        return;
+      }
         items = items.filter((i) => i.productId !== el.dataset.productId);
         render(items);
       });

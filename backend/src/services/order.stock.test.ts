@@ -34,6 +34,7 @@ vi.mock('./orderNotification.service', () => ({
   notifyOrderPlaced: vi.fn(),
   notifyOrderShipped: vi.fn(),
   notifyOwnerOrderPaid: vi.fn(),
+  notifyOwnerCodOrder: vi.fn(),
 }));
 vi.mock('./komoju.service', () => ({
   isKomojuConfigured: () => false,

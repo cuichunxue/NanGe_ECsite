@@ -2,9 +2,10 @@ import { initLayout } from '../layout.js';
 import { requireAuth } from '../guards.js';
 import { addressApi, cartApi, orderApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
-import { calculateShippingFee, resolveShippingRegion, SHIPPING_REGIONS } from '../shipping.js';
+import { calculateShippingFee, resolveShippingRegion, SHIPPING_REGIONS, PREFECTURES } from '../shipping.js';
 import { PAYMENT_METHODS, isOnlinePayment } from '../payment.js';
 import { renderFreeShippingProgress } from '../components.js';
+import { notify } from '../notify.js';
 
 if (requireAuth('')) {
   initLayout({ base: '' });
@@ -22,6 +23,11 @@ if (requireAuth('')) {
       </label>
     `,
   ).join('');
+
+  // 都道府県は送料に直結するため選択式にする。自由入力だと「おきなわ」等の
+  // 表記ゆれが本州扱いになり、店主が送料を負担することになる。
+  document.getElementById('addr-province').innerHTML =
+    '<option value="">都道府県を選ぶ</option>' + PREFECTURES.map((p) => `<option value="${p}">${p}</option>`).join('');
 
   let cart = null;
   let addresses = [];
@@ -75,12 +81,20 @@ if (requireAuth('')) {
       city: document.getElementById('addr-city').value,
       district: document.getElementById('addr-district').value,
       detail: document.getElementById('addr-detail').value,
+      postalCode: document.getElementById('addr-postal-code').value,
     };
-    const res = await addressApi.create(payload);
+    // 保存できなかったことを伝えないと、購入者はレジで「押しても何も起きない」状態になる
+    let res;
+    try {
+      res = await addressApi.create(payload);
+    } catch (err) {
+      notify(getErrorMessage(err, '住所を保存できませんでした'));
+      return;
+    }
     document.getElementById('address-form').classList.add('hidden');
     document.getElementById('address-form').classList.remove('grid');
     document.getElementById('show-address-form-btn').classList.remove('hidden');
-    ['addr-recipient', 'addr-phone', 'addr-province', 'addr-city', 'addr-district', 'addr-detail'].forEach((id) => {
+    ['addr-recipient', 'addr-phone', 'addr-postal-code', 'addr-province', 'addr-city', 'addr-district', 'addr-detail'].forEach((id) => {
       document.getElementById(id).value = '';
     });
     await loadAddresses();
