@@ -31,6 +31,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     });
   }
 
+  // 本文が大きすぎる場合。body-parserは entity.too.large を投げる。
+  // 判定しないと500になり、運営者にはサーバー障害と区別がつかなくなる。
+  if ((err as { type?: string }).type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      error: { code: 'PAYLOAD_TOO_LARGE', message: '送信された内容が大きすぎます' },
+    });
+  }
+
   // 添付ファイルの制限に引っかかった場合。原因が分からないと運営者は
   // 「サイトが壊れた」と受け取ってしまうため、何をすればよいかを返す。
   if (err instanceof MulterError) {

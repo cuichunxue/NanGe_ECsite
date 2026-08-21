@@ -82,6 +82,14 @@ async function request(method, path, { params, body, retry = false } = {}) {
   if (!res.ok || (payload && payload.success === false)) {
     const code = payload?.error?.code ?? 'UNKNOWN';
     const message = payload?.error?.message ?? 'エラーが発生しました';
+    // アカウントが停止されると、以降どの操作も同じ理由で失敗し続ける。
+    // ログイン状態のまま置いておくと、画面上は使えるように見えて何をしても
+    // エラーになるため、保存していたログイン情報を消してログイン画面へ送る。
+    if (code === 'ACCOUNT_SUSPENDED') {
+      Auth.clear();
+      const base = location.pathname.includes('/admin/') ? '../' : '';
+      location.replace(`${base}login.html?reason=suspended`);
+    }
     throw new ApiError(code, message);
   }
 

@@ -18,9 +18,18 @@ const orderAggregate = vi.fn();
 const orderGroupBy = vi.fn();
 const orderFindMany = vi.fn();
 
+// requireAuth はリクエストのたびにアカウントが有効かを読み直すため、
+// 認証を通すには店主(ADMIN・ACTIVE)が引けるようにしておく必要がある。
+const ADMIN_ACCOUNT = {
+  id: '10000000-0000-4000-8000-000000000001',
+  role: 'ADMIN' as const,
+  email: 'owner@soloshop.example.com',
+  status: 'ACTIVE' as const,
+};
+
 vi.mock('../config/prisma', () => ({
   prisma: {
-    user: { count: vi.fn().mockResolvedValue(0) },
+    user: { count: vi.fn().mockResolvedValue(0), findUnique: vi.fn(async () => ADMIN_ACCOUNT) },
     order: {
       count: vi.fn().mockResolvedValue(0),
       aggregate: (...args: unknown[]) => orderAggregate(...args),

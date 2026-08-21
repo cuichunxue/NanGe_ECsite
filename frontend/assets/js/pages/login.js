@@ -8,6 +8,14 @@ initLayout({ base: '' });
 const params = new URLSearchParams(location.search);
 const from = params.get('from');
 
+// アカウントが停止されて追い出された場合は、その理由をここで伝える。
+// 伝えないと「急にログアウトされた」としか見えず、問い合わせるきっかけも掴めない。
+if (params.get('reason') === 'suspended') {
+  const errorMsg = document.getElementById('error-msg');
+  errorMsg.textContent = 'このアカウントは停止されています。お心当たりがない場合はお問い合わせください。';
+  errorMsg.classList.remove('hidden');
+}
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errorMsg = document.getElementById('error-msg');
