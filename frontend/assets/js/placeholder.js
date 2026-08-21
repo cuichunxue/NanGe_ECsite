@@ -13,3 +13,29 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" vi
 </svg>`;
 
 export const NO_IMAGE_PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(SVG)}`;
+
+/**
+ * 画像が読み込めなかったときに、埋め込みのプレースホルダへ差し替える。
+ *
+ * URLが入っていても、その画像が消えていたり、外部サービスが落ちていたり、
+ * 社内の通信制限で外部サイトへ出られなかったりすると、ブラウザは「壊れた画像」の
+ * 印を出す。店を開いた直後にそれが並ぶと、購入者にはサイトが壊れているように見える。
+ *
+ * img ごとに onerror を書くと、この画像データ（数百文字）がページ内に何十個も
+ * 複製されてしまうため、ページ全体で1回だけ受け止める。読み込み失敗(error)は
+ * 親要素へ伝わらない性質があるので、捕捉フェーズ(capture)で拾う必要がある。
+ * 後から差し込まれた画像にも同じように効く。
+ */
+export function installImageFallback() {
+  document.addEventListener(
+    'error',
+    (e) => {
+      const el = e.target;
+      if (!(el instanceof HTMLImageElement)) return;
+      if (el.dataset.fallbackApplied) return; // 差し替えた画像でまた失敗しても繰り返さない
+      el.dataset.fallbackApplied = '1';
+      el.src = NO_IMAGE_PLACEHOLDER;
+    },
+    true,
+  );
+}

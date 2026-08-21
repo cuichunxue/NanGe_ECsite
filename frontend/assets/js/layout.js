@@ -1,6 +1,7 @@
 import { Auth } from './auth.js';
 import { cartApi } from './api.js';
 import { escapeHtml } from './format.js';
+import { installImageFallback } from './placeholder.js';
 
 function currentPage() {
   return location.pathname.split('/').pop() + location.search;
@@ -126,6 +127,8 @@ function renderFooter(base) {
 }
 
 export function initLayout({ base = '', keyword = '' } = {}) {
+  // どのページも最初にこれを呼ぶため、画像の差し替えもここで仕掛けておく
+  installImageFallback();
   renderHeader(base, keyword);
   renderFooter(base);
 }

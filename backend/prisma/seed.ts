@@ -64,6 +64,11 @@ async function main() {
     create: { id: CATEGORY_ID.food, name: '食品・ドリンク', sortOrder: 4 },
   });
 
+  // 商品写真は入れていない。外部の画像サービスを参照すると、その事業者が
+  // 落ちたときや社内の通信制限で外部へ出られないときに、開店直後の店が
+  // 「画像が壊れた状態」で表示されてしまう（NFR-024）。
+  // 写真が無い間は、埋め込みのプレースホルダが表示される。
+  // 店主は管理画面の商品編集から自分の写真をアップロードして差し替える。
   const products = [
     {
       sku: 'AC-1001',
@@ -74,7 +79,7 @@ async function main() {
       price: 2400,
       originalPrice: 2800,
       stock: 12,
-      images: ['https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800'],
+      images: [],
     },
     {
       sku: 'AC-1002',
@@ -84,7 +89,7 @@ async function main() {
       categoryId: accessory.id,
       price: 3200,
       stock: 8,
-      images: ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800'],
+      images: [],
     },
     {
       sku: 'KT-2001',
@@ -95,7 +100,7 @@ async function main() {
       price: 3800,
       originalPrice: 4500,
       stock: 15,
-      images: ['https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800'],
+      images: [],
     },
     {
       sku: 'KT-2002',
@@ -105,7 +110,7 @@ async function main() {
       categoryId: kitchen.id,
       price: 4200,
       stock: 10,
-      images: ['https://images.unsplash.com/photo-1594226801341-9a3f8b6b7dcd?w=800'],
+      images: [],
     },
     {
       sku: 'ST-3001',
@@ -115,7 +120,7 @@ async function main() {
       categoryId: stationery.id,
       price: 1600,
       stock: 30,
-      images: ['https://images.unsplash.com/photo-1519791883288-dc8bd696e667?w=800'],
+      images: [],
     },
     {
       sku: 'ST-3002',
@@ -126,7 +131,7 @@ async function main() {
       price: 1200,
       originalPrice: 1500,
       stock: 25,
-      images: ['https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=800'],
+      images: [],
     },
     {
       sku: 'FD-4001',
@@ -138,7 +143,7 @@ async function main() {
       categoryId: food.id,
       price: 1400,
       stock: 40,
-      images: ['https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800'],
+      images: [],
     },
     {
       sku: 'FD-4002',
@@ -150,7 +155,7 @@ async function main() {
       categoryId: food.id,
       price: 2200,
       stock: 20,
-      images: ['https://images.unsplash.com/photo-1600853225238-6b8647d24a6f?w=800'],
+      images: [],
     },
   ];
 
