@@ -32,6 +32,20 @@ if (requireAdmin('../')) {
       )
       .join('');
 
+    // 販売中の商品がすべて送料無料の基準以上だと、送料は全額が店主の負担になる。
+    // 金額の計算自体は正しく行われるため気づきにくいので、ここで知らせる。
+    const notice = document.getElementById('shipping-notice');
+    if (stats.alwaysFreeShipping) {
+      notice.innerHTML =
+        `<p class="font-medium">いまは、どの商品を1点買っても送料無料になります</p>` +
+        `<p class="mt-1">送料無料の基準が${formatPrice(stats.freeShippingThreshold)}で、いちばん安い商品が${formatPrice(stats.cheapestProductPrice)}のためです。` +
+        `送料は全額がお店の負担になります。基準額を変えるには <code>backend/src/config/shipping.ts</code> と ` +
+        `<code>frontend/assets/js/shipping.js</code> の <code>FREE_SHIPPING_THRESHOLD</code> を直してください（両方を同じ値にすること）。</p>`;
+      notice.classList.remove('hidden');
+    } else {
+      notice.classList.add('hidden');
+    }
+
     document.getElementById('status-counts').innerHTML = stats.ordersByStatus
       .map((s) => `<span class="rounded bg-gray-100 px-3 py-1 text-sm">${orderStatusLabel[s.status]}: ${s.count}</span>`)
       .join('');

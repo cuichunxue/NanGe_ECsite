@@ -12,6 +12,7 @@ import { updateOrderStatusSchema, listOrdersQuerySchema } from '../validators/or
 import * as orderService from '../services/order.service';
 import { toPublicUser } from '../services/auth.service';
 import { MAX_IMAGE_BYTES, storeProductImage } from '../services/upload.service';
+import { FREE_SHIPPING_THRESHOLD } from '../config/shipping';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -32,6 +33,16 @@ router.get(
       prisma.order.groupBy({ by: ['status'], _count: { status: true } }),
     ]);
 
+    // 販売中の商品がすべて送料無料の基準額以上だと、何を1点買っても送料無料になり、
+    // 送料は全額が店主の負担になる。金額そのものは正常に処理されるため気づきにくく、
+    // 気づかないまま続けると利益がじわじわ削られる。ここで知らせる。
+    const cheapest = await prisma.product.findFirst({
+      where: { status: 'ON_SALE' },
+      orderBy: { price: 'asc' },
+      select: { price: true },
+    });
+    const alwaysFreeShipping = Boolean(cheapest && Number(cheapest.price) >= FREE_SHIPPING_THRESHOLD);
+
     const recentOrders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -44,6 +55,10 @@ router.get(
       productCount,
       lowStockCount,
       totalRevenue: revenueAgg._sum.totalAmount ?? 0,
+      freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
+      // 「どの商品を買っても送料無料になる」状態かどうか
+      alwaysFreeShipping,
+      cheapestProductPrice: cheapest ? Number(cheapest.price) : null,
       ordersByStatus: statusGroups.map((g) => ({ status: g.status, count: g._count.status })),
       recentOrders,
     });
