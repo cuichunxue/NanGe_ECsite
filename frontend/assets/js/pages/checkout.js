@@ -3,7 +3,7 @@ import { requireAuth } from '../guards.js';
 import { addressApi, cartApi, orderApi, getErrorMessage } from '../api.js';
 import { formatPrice, escapeHtml } from '../format.js';
 import { calculateShippingFee, resolveShippingRegion, SHIPPING_REGIONS, PREFECTURES } from '../shipping.js';
-import { PAYMENT_METHODS, isOnlinePayment } from '../payment.js';
+import { PAYMENT_METHODS, isOnlinePayment, paymentFeeFor } from '../payment.js';
 import { renderFreeShippingProgress } from '../components.js';
 import { notify } from '../notify.js';
 
@@ -17,7 +17,7 @@ if (requireAuth('')) {
       <label class="flex items-start gap-2">
         <input type="radio" name="payment" value="${escapeHtml(m.key)}" class="mt-1" ${i === 0 ? 'checked' : ''} />
         <span>
-          ${escapeHtml(m.label)}
+          ${escapeHtml(m.label)}${m.fee ? `<span class="ml-1 text-xs text-gray-600">（手数料 ${formatPrice(m.fee)}）</span>` : ''}
           ${m.note ? `<span class="block text-xs text-gray-500">${escapeHtml(m.note)}</span>` : ''}
         </span>
       </label>
@@ -33,6 +33,10 @@ if (requireAuth('')) {
   let addresses = [];
   let selectedAddress = '';
   let submitting = false;
+
+  const selectedPaymentMethod = () => document.querySelector('input[name="payment"]:checked')?.value ?? PAYMENT_METHODS[0].key;
+  // 支払い方法で手数料が変わるため、切り替えたら合計を引き直す
+  document.querySelectorAll('input[name="payment"]').forEach((el) => el.addEventListener('change', () => renderSummary()));
 
   function loadAddresses() {
     return addressApi.list().then((res) => {
@@ -106,7 +110,8 @@ if (requireAuth('')) {
     const subtotal = cart?.totalAmount ?? 0;
     const province = addresses.find((a) => a.id === selectedAddress)?.province;
     const shippingFee = calculateShippingFee(subtotal, province);
-    const total = subtotal + shippingFee;
+    const codFee = paymentFeeFor(selectedPaymentMethod());
+    const total = subtotal + shippingFee + codFee;
 
     renderFreeShippingProgress(document.getElementById('shipping-progress'), subtotal);
     document.getElementById('summary-subtotal').textContent = formatPrice(subtotal);
@@ -118,6 +123,11 @@ if (requireAuth('')) {
     } else {
       shippingEl.textContent = formatPrice(shippingFee);
     }
+    // 代引手数料は代金引換を選んだときだけ行を出す（他の方法では見せない方が迷わない）
+    const codRow = document.getElementById('summary-cod-row');
+    codRow.classList.toggle('hidden', codFee === 0);
+    codRow.classList.toggle('flex', codFee > 0);
+    document.getElementById('summary-cod').textContent = formatPrice(codFee);
     document.getElementById('summary-total').textContent = formatPrice(total);
     document.getElementById('submit-btn').textContent = submitting ? '処理中…' : `注文を確定する（${formatPrice(total)}）`;
     return { total };

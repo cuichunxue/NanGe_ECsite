@@ -32,6 +32,24 @@ if (requireAdmin('../')) {
       )
       .join('');
 
+    // 入金済みで発送していない注文。特定商取引法に基づく表示で「◯営業日以内に発送」と
+    // 約束しているため、滞ると法令上の問題になる。注文一覧を毎日開かなくても
+    // ここで気づけるようにする。
+    const shipment = document.getElementById('shipment-notice');
+    const awaiting = stats.awaitingShipment ?? { count: 0 };
+    if (awaiting.count > 0) {
+      const days = awaiting.oldestPaidAt ? Math.floor((Date.now() - new Date(awaiting.oldestPaidAt).getTime()) / 86400000) : 0;
+      const oldest = awaiting.oldestPaidAt
+        ? `いちばん古いものは ${escapeHtml(awaiting.oldestOrderNo)}（入金から${days}日）です。`
+        : '';
+      shipment.innerHTML =
+        `<p class="font-medium">発送待ちの注文が ${awaiting.count} 件あります</p>` +
+        `<p class="mt-1">${oldest}<a href="orders.html?status=PAID" class="underline">発送待ちの注文を見る</a></p>`;
+      shipment.classList.remove('hidden');
+    } else {
+      shipment.classList.add('hidden');
+    }
+
     // 販売中の商品がすべて送料無料の基準以上だと、送料は全額が店主の負担になる。
     // 金額の計算自体は正しく行われるため気づきにくいので、ここで知らせる。
     const notice = document.getElementById('shipping-notice');

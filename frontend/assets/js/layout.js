@@ -120,6 +120,7 @@ function renderFooter(base) {
         <a href="${base}legal.html" class="hover:text-brand-500 hover:underline">特定商取引法に基づく表示</a>
         <a href="${base}privacy.html" class="hover:text-brand-500 hover:underline">プライバシーポリシー</a>
         <a href="${base}terms.html" class="hover:text-brand-500 hover:underline">利用規約</a>
+        <a href="${base}legal.html#contact" class="hover:text-brand-500 hover:underline">お問い合わせ</a>
       </nav>
       <p class="mt-3">© ${new Date().getFullYear()} Solo Shop. All rights reserved.</p>
     </footer>

@@ -17,6 +17,8 @@ const productFindFirst = vi.fn();
 const orderAggregate = vi.fn();
 const orderGroupBy = vi.fn();
 const orderFindMany = vi.fn();
+const orderFindFirst = vi.fn();
+const orderCount = vi.fn();
 
 // requireAuth はリクエストのたびにアカウントが有効かを読み直すため、
 // 認証を通すには店主(ADMIN・ACTIVE)が引けるようにしておく必要がある。
@@ -31,10 +33,11 @@ vi.mock('../config/prisma', () => ({
   prisma: {
     user: { count: vi.fn().mockResolvedValue(0), findUnique: vi.fn(async () => ADMIN_ACCOUNT) },
     order: {
-      count: vi.fn().mockResolvedValue(0),
+      count: (...args: unknown[]) => orderCount(...args),
       aggregate: (...args: unknown[]) => orderAggregate(...args),
       groupBy: (...args: unknown[]) => orderGroupBy(...args),
       findMany: (...args: unknown[]) => orderFindMany(...args),
+      findFirst: (...args: unknown[]) => orderFindFirst(...args),
     },
     product: {
       count: (...args: unknown[]) => productCount(...args),
@@ -59,6 +62,8 @@ describe('送料無料になりっぱなしの状態を知らせる', () => {
     orderAggregate.mockResolvedValue({ _sum: { totalAmount: 0 } });
     orderGroupBy.mockResolvedValue([]);
     orderFindMany.mockResolvedValue([]);
+    orderFindFirst.mockResolvedValue(null);
+    orderCount.mockResolvedValue(0);
   });
 
   it('いちばん安い商品が基準額を超えていると知らせる', async () => {
@@ -110,5 +115,31 @@ describe('送料無料になりっぱなしの状態を知らせる', () => {
     expect(productFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { status: 'ON_SALE' }, orderBy: { price: 'asc' } }),
     );
+  });
+
+  it('入金済みで発送していない注文の件数と、いちばん古いものを返す', async () => {
+    productFindFirst.mockResolvedValue(null);
+    orderCount.mockResolvedValue(3);
+    const paidAt = new Date('2026-08-20T00:00:00Z');
+    orderFindFirst.mockResolvedValue({ orderNo: 'SS20260820000000000001', paidAt });
+
+    const res = await fetchDashboard();
+
+    expect(res.body.data.awaitingShipment).toEqual({
+      count: 3,
+      oldestOrderNo: 'SS20260820000000000001',
+      oldestPaidAt: paidAt.toISOString(),
+    });
+    expect(orderFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { status: 'PAID' }, orderBy: { paidAt: 'asc' } }),
+    );
+  });
+
+  it('発送待ちが無いときは件数0で、古いものは無し', async () => {
+    productFindFirst.mockResolvedValue(null);
+
+    const res = await fetchDashboard();
+
+    expect(res.body.data.awaitingShipment).toEqual({ count: 0, oldestOrderNo: null, oldestPaidAt: null });
   });
 });

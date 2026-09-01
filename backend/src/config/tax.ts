@@ -62,7 +62,12 @@ export function calculateTaxBreakdown(lines: TaxableLine[]): TaxBreakdownEntry[]
     });
 }
 
+/** 送料・代引手数料などの役務は標準税率。0円なら明細を作らない。 */
+export function standardRateTaxLine(amount: number): TaxableLine[] {
+  return amount > 0 ? [{ taxIncludedAmount: amount, taxRate: STANDARD_TAX_RATE }] : [];
+}
+
 /** 送料は標準税率。商品の明細と合わせて内訳を求めるために使う。 */
 export function shippingTaxLine(shippingFee: number): TaxableLine[] {
-  return shippingFee > 0 ? [{ taxIncludedAmount: shippingFee, taxRate: STANDARD_TAX_RATE }] : [];
+  return standardRateTaxLine(shippingFee);
 }

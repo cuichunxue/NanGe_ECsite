@@ -16,6 +16,8 @@ export const PAYMENT_METHODS = [
     label: '代金引換',
     komojuType: null,
     note: '商品お受け取り時に配達員へお支払いください',
+    // 代引手数料（税込）。backend/src/config/payment.ts と同じ値にすること
+    fee: 330,
   },
 ];
 
@@ -30,4 +32,9 @@ export function paymentLabel(key) {
 /** KOMOJUの決済ページへ遷移する方法かどうか（代金引換だけが false） */
 export function isOnlinePayment(key) {
   return Boolean(findPaymentMethod(key)?.komojuType);
+}
+
+/** その支払い方法で購入者に加算する手数料。無ければ0 */
+export function paymentFeeFor(key) {
+  return findPaymentMethod(key)?.fee ?? 0;
 }

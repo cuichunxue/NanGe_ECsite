@@ -51,6 +51,15 @@ if (requireAuth('')) {
           <td class="py-2 text-right">${formatPrice(order.shippingFee)}</td>
         </tr>`);
     }
+    if (Number(order.codFee ?? 0) > 0) {
+      rows.push(`
+        <tr>
+          <td class="py-2">代引手数料</td>
+          <td class="py-2 text-right">1</td>
+          <td class="py-2 text-right">${formatPrice(order.codFee)}</td>
+          <td class="py-2 text-right">${formatPrice(order.codFee)}</td>
+        </tr>`);
+    }
     document.getElementById('invoice-items').innerHTML = rows.join('');
     document.getElementById('reduced-note').classList.toggle('hidden', !hasReduced);
 

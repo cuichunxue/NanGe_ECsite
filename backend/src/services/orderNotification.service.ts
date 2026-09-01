@@ -50,6 +50,7 @@ function formatAmounts(order: OrderForMail): string {
   return [
     `商品小計: ${yen(order.subtotal)}`,
     `送料: ${Number(order.shippingFee) === 0 ? '無料' : yen(order.shippingFee)}`,
+    ...(Number(order.codFee ?? 0) > 0 ? [`代引手数料: ${yen(order.codFee)}`] : []),
     `合計: ${yen(order.totalAmount)}`,
   ].join('\n');
 }

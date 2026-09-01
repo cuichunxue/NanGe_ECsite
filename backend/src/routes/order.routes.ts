@@ -9,7 +9,7 @@ import { ApiError } from '../utils/apiError';
 import { idParamSchema } from '../validators/common';
 import { checkoutSchema, listOrdersQuerySchema } from '../validators/orderValidators';
 import * as orderService from '../services/order.service';
-import { calculateTaxBreakdown, shippingTaxLine } from '../config/tax';
+import { calculateTaxBreakdown, shippingTaxLine, standardRateTaxLine } from '../config/tax';
 import { env } from '../config/env';
 
 const router = Router();
@@ -73,6 +73,8 @@ router.get(
     const lines = [
       ...order.items.map((i) => ({ taxIncludedAmount: Number(i.price) * i.quantity, taxRate: i.taxRate })),
       ...shippingTaxLine(Number(order.shippingFee)),
+      // 代引手数料も役務の対価として標準税率で課税される
+      ...standardRateTaxLine(Number(order.codFee)),
     ];
 
     ok(res, {

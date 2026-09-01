@@ -4,7 +4,7 @@ import { ApiError } from '../utils/apiError';
 import { generateOrderNo } from '../utils/orderNo';
 import { getOrCreateCart } from './cart.service';
 import { calculateShippingFee } from '../config/shipping';
-import { isOnlinePayment } from '../config/payment';
+import { isOnlinePayment, paymentFeeFor } from '../config/payment';
 import { notifyOrderPlaced, notifyOrderShipped, notifyOwnerOrderPaid, notifyOwnerCodOrder } from './orderNotification.service';
 import * as komoju from './komoju.service';
 import { env } from '../config/env';
@@ -72,7 +72,9 @@ export async function checkout(input: CheckoutInput) {
     // 送料は届け先の都道府県で決まる。金額を確定させるのは必ずここ（サーバー側）で、
     // 画面に表示していた金額をそのまま信用しない。
     const shippingFee = calculateShippingFee(subtotal, address.province);
-    const totalAmount = Math.max(0, subtotal + shippingFee);
+    // 代金引換は配送業者が店主に手数料を請求する。購入者から頂かないと全額が店主の負担になる。
+    const codFee = paymentFeeFor(paymentMethod);
+    const totalAmount = Math.max(0, subtotal + shippingFee + codFee);
 
     const createdOrder = await tx.order.create({
       data: {
@@ -82,6 +84,7 @@ export async function checkout(input: CheckoutInput) {
         addressSnapshot: address as unknown as Prisma.InputJsonValue,
         subtotal,
         shippingFee,
+        codFee,
         totalAmount,
         paymentMethod,
         remark,

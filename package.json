@@ -21,7 +21,8 @@
     "prisma:migrate": "npm run prisma:migrate -w backend",
     "prisma:migrate:dev": "npm run prisma:migrate:dev -w backend",
     "mail:check": "npm run mail:check -w backend",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "check:launch": "node scripts/check-launch.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

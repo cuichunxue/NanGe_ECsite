@@ -137,6 +137,11 @@ if (requireAuth('')) {
 
     document.getElementById('summary-subtotal').textContent = formatPrice(order.subtotal);
     document.getElementById('summary-shipping').textContent = formatPrice(order.shippingFee);
+    const codFee = Number(order.codFee ?? 0);
+    const codRow = document.getElementById('summary-cod-row');
+    codRow.classList.toggle('hidden', codFee === 0);
+    codRow.classList.toggle('flex', codFee > 0);
+    document.getElementById('summary-cod').textContent = formatPrice(codFee);
     document.getElementById('summary-total').textContent = formatPrice(order.totalAmount);
 
     const pendingActions = document.getElementById('pending-actions');

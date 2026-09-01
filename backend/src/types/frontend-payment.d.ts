@@ -6,8 +6,9 @@
  * テストから読むための宣言で、実行時のバックエンドはこのファイルを使わない。
  */
 declare module '*/frontend/assets/js/payment.js' {
-  export const PAYMENT_METHODS: { key: string; label: string; komojuType: string | null; note?: string }[];
+  export const PAYMENT_METHODS: { key: string; label: string; komojuType: string | null; note?: string; fee?: number }[];
   export function findPaymentMethod(key: string | null | undefined): { key: string; label: string } | null;
   export function paymentLabel(key: string | null | undefined): string;
   export function isOnlinePayment(key: string | null | undefined): boolean;
+  export function paymentFeeFor(key: string | null | undefined): number;
 }

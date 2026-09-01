@@ -43,6 +43,18 @@ router.get(
     });
     const alwaysFreeShipping = Boolean(cheapest && Number(cheapest.price) >= FREE_SHIPPING_THRESHOLD);
 
+    // 入金済みで発送していない注文。特定商取引法に基づく表示で約束した発送期限を
+    // 守れているかは、注文一覧を毎日見に行かないと分からない。ダッシュボードで
+    // 件数といちばん古いものを知らせる。
+    const [awaitingShipmentCount, oldestAwaiting] = await Promise.all([
+      prisma.order.count({ where: { status: 'PAID' } }),
+      prisma.order.findFirst({
+        where: { status: 'PAID' },
+        orderBy: { paidAt: 'asc' },
+        select: { orderNo: true, paidAt: true },
+      }),
+    ]);
+
     const recentOrders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -59,6 +71,11 @@ router.get(
       // 「どの商品を買っても送料無料になる」状態かどうか
       alwaysFreeShipping,
       cheapestProductPrice: cheapest ? Number(cheapest.price) : null,
+      awaitingShipment: {
+        count: awaitingShipmentCount,
+        oldestOrderNo: oldestAwaiting?.orderNo ?? null,
+        oldestPaidAt: oldestAwaiting?.paidAt ?? null,
+      },
       ordersByStatus: statusGroups.map((g) => ({ status: g.status, count: g._count.status })),
       recentOrders,
     });

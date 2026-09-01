@@ -19,6 +19,12 @@ export interface PaymentMethod {
   komojuType: string | null;
   /** 選ぶときの補足。購入者が迷わないよう、条件があるものには書く */
   note?: string;
+  /**
+   * その支払い方法を選んだときに購入者に加算する手数料（税込・円）。
+   * 代金引換は配送業者が店主に請求する手数料があり、購入者から頂かないと
+   * 全額が店主の負担になる。個人店では1件330円でも積み重なると無視できない。
+   */
+  fee?: number;
 }
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
@@ -35,6 +41,9 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
     label: '代金引換',
     komojuType: null,
     note: '商品お受け取り時に配達員へお支払いください',
+    // ヤマト運輸・佐川急便の代引手数料（1万円以下）に合わせた既定値。
+    // 変えるときは特定商取引法に基づく表示(frontend/legal.html)の記載も合わせること。
+    fee: 330,
   },
 ];
 
@@ -60,4 +69,9 @@ export function isOnlinePayment(key: string | null | undefined): key is string {
 /** KOMOJUに渡す決済手段名。オンライン決済でなければ null */
 export function komojuTypeFor(key: string | null | undefined): string | null {
   return findPaymentMethod(key)?.komojuType ?? null;
+}
+
+/** その支払い方法で購入者に加算する手数料。無ければ0 */
+export function paymentFeeFor(key: string | null | undefined): number {
+  return findPaymentMethod(key)?.fee ?? 0;
 }

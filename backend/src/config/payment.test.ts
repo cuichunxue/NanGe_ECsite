@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { PAYMENT_METHODS, PAYMENT_METHOD_KEYS, paymentLabel, isOnlinePayment, komojuTypeFor } from './payment';
+import { PAYMENT_METHODS, PAYMENT_METHOD_KEYS, paymentLabel, isOnlinePayment, komojuTypeFor, paymentFeeFor } from './payment';
 // 画面用の一覧。バックエンド(入力チェック・決済依頼)と画面(選択肢の表示)で
 // 食い違うと、選べるのに決済できない支払い方法が出てしまうため突き合わせる。
 import {
   PAYMENT_METHODS as FRONT_METHODS,
   isOnlinePayment as frontIsOnlinePayment,
   paymentLabel as frontPaymentLabel,
+  paymentFeeFor as frontPaymentFeeFor,
 } from '../../../frontend/assets/js/payment.js';
 
 describe('支払い方法', () => {
@@ -45,14 +46,26 @@ describe('支払い方法', () => {
     expect(offline.map((m) => m.key)).toEqual(['COD']);
   });
 
+  it('代金引換には手数料がかかり、オンライン決済にはかからない', () => {
+    // 配送業者が店主に請求する代引手数料を購入者から頂く。
+    // 頂かないと1件ごとに店主の持ち出しになる。
+    expect(paymentFeeFor('COD')).toBeGreaterThan(0);
+    expect(paymentFeeFor('CREDIT_CARD')).toBe(0);
+    expect(paymentFeeFor('PAYPAY')).toBe(0);
+    expect(paymentFeeFor('BITCOIN')).toBe(0);
+    expect(paymentFeeFor(null)).toBe(0);
+  });
+
   it('フロントエンドの一覧と一致している', () => {
-    const shape = (list: { key: string; label: string; komojuType: string | null }[]) =>
-      list.map((m) => `${m.key}:${m.label}:${m.komojuType ?? '-'}`);
+    const shape = (list: { key: string; label: string; komojuType: string | null; fee?: number }[]) =>
+      list.map((m) => `${m.key}:${m.label}:${m.komojuType ?? '-'}:${m.fee ?? 0}`);
     expect(shape(FRONT_METHODS)).toEqual(shape(PAYMENT_METHODS));
 
     for (const m of PAYMENT_METHODS) {
       expect(frontIsOnlinePayment(m.key)).toBe(isOnlinePayment(m.key));
       expect(frontPaymentLabel(m.key)).toBe(paymentLabel(m.key));
+      // 画面で見せる手数料と、注文時に請求する手数料が食い違わないこと
+      expect(frontPaymentFeeFor(m.key)).toBe(paymentFeeFor(m.key));
     }
   });
 });
