@@ -23,15 +23,16 @@
               <button id="search-btn" class="btn-secondary">検索</button>
             </div>
             <div class="card overflow-x-auto">
-              <table class="w-full min-w-[38rem] text-left text-sm">
+              <!-- スマホでは在庫・状態を商品名の下にまとめ、「操作」は必ず画面内に収める -->
+              <table class="w-full text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500">
                   <tr>
                     <th class="p-3">商品</th>
                     <th class="hidden p-3 sm:table-cell">SKU</th>
                     <th class="p-3">価格</th>
-                    <th class="p-3">在庫</th>
-                    <th class="p-3">ステータス</th>
-                    <th class="p-3">操作</th>
+                    <th class="hidden p-3 sm:table-cell">在庫</th>
+                    <th class="hidden p-3 sm:table-cell">ステータス</th>
+                    <th class="whitespace-nowrap p-3">操作</th>
                   </tr>
                 </thead>
                 <tbody id="product-rows"></tbody>

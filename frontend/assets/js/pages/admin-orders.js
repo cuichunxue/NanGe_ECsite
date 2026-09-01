@@ -17,12 +17,14 @@ if (requireAdmin('../')) {
         .map(
           (o) => `
           <tr class="border-t">
-            <td class="p-3">${escapeHtml(o.orderNo)}</td>
+            <td class="p-3">
+              <a href="order-detail.html?id=${encodeURIComponent(o.id)}" class="break-all font-medium text-brand-500 hover:underline">${escapeHtml(o.orderNo)}</a>
+              <span class="mt-1 block sm:hidden"><span class="rounded px-2 py-0.5 text-xs ${orderStatusColor[o.status]}">${orderStatusLabel[o.status]}</span></span>
+            </td>
             <td class="p-3">${escapeHtml(o.user?.name ?? '')}</td>
-            <td class="p-3">${formatPrice(o.totalAmount)}</td>
-            <td class="p-3"><span class="rounded px-2 py-0.5 text-xs ${orderStatusColor[o.status]}">${orderStatusLabel[o.status]}</span></td>
-            <td class="p-3 text-gray-400">${formatDateTime(o.createdAt)}</td>
-            <td class="p-3"><a href="order-detail.html?id=${encodeURIComponent(o.id)}" class="text-brand-500 hover:underline">詳細</a></td>
+            <td class="p-3 whitespace-nowrap">${formatPrice(o.totalAmount)}</td>
+            <td class="hidden p-3 sm:table-cell"><span class="rounded px-2 py-0.5 text-xs ${orderStatusColor[o.status]}">${orderStatusLabel[o.status]}</span></td>
+            <td class="hidden p-3 text-gray-400 md:table-cell">${formatDateTime(o.createdAt)}</td>
           </tr>
         `,
         )

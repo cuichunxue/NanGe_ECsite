@@ -20,14 +20,15 @@
               <button id="search-btn" class="btn-secondary">検索</button>
             </div>
             <div class="card overflow-x-auto">
-              <table class="w-full min-w-[38rem] text-left text-sm">
+              <!-- スマホではメールと状態を氏名の下にまとめ、「凍結する」は必ず画面内に収める -->
+              <table class="w-full text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500">
                   <tr>
                     <th class="p-3">氏名</th>
-                    <th class="p-3">メールアドレス</th>
-                    <th class="p-3">ロール</th>
-                    <th class="p-3">ステータス</th>
-                    <th class="p-3">登録日</th>
+                    <th class="hidden p-3 sm:table-cell">メールアドレス</th>
+                    <th class="hidden p-3 md:table-cell">ロール</th>
+                    <th class="hidden p-3 sm:table-cell">ステータス</th>
+                    <th class="hidden p-3 md:table-cell">登録日</th>
                     <th class="p-3"></th>
                   </tr>
                 </thead>

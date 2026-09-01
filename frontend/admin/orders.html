@@ -25,15 +25,16 @@
               <option value="REFUNDED">返金済み</option>
             </select>
             <div class="card overflow-x-auto">
-              <table class="w-full min-w-[38rem] text-left text-sm">
+              <!-- スマホでは横に長い表の右側が画面外に隠れ、状態や「詳細」に気づけない。
+                   注文番号を詳細へのリンクにし、状態は番号の下に出す。日時は広い画面だけ。 -->
+              <table class="w-full text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500">
                   <tr>
                     <th class="p-3">注文番号</th>
                     <th class="p-3">会員</th>
                     <th class="p-3">金額</th>
-                    <th class="p-3">ステータス</th>
-                    <th class="p-3">日時</th>
-                    <th class="p-3"></th>
+                    <th class="hidden p-3 sm:table-cell">ステータス</th>
+                    <th class="hidden p-3 md:table-cell">日時</th>
                   </tr>
                 </thead>
                 <tbody id="order-rows"></tbody>

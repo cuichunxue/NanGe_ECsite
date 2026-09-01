@@ -18,12 +18,16 @@ if (requireAdmin('../')) {
         .map(
           (u) => `
           <tr class="border-t" data-user-id="${u.id}">
-            <td class="p-3">${escapeHtml(u.name)}</td>
-            <td class="p-3">${escapeHtml(u.email)}</td>
-            <td class="p-3">${u.role === 'ADMIN' ? '管理者' : '会員'}</td>
-            <td class="p-3"><span class="rounded px-2 py-0.5 text-xs ${u.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.status === 'ACTIVE' ? '有効' : '停止中'}</span></td>
-            <td class="p-3 text-gray-400">${formatDateTime(u.createdAt)}</td>
-            <td class="p-3">${u.role !== 'ADMIN' ? `<button data-action="toggle" class="text-brand-500 hover:underline">${u.status === 'ACTIVE' ? '凍結する' : '解除する'}</button>` : ''}</td>
+            <td class="p-3">
+              ${escapeHtml(u.name)}${u.role === 'ADMIN' ? '<span class="ml-1 text-xs text-gray-500">（店主）</span>' : ''}
+              <span class="mt-1 block break-all text-xs text-gray-500 sm:hidden">${escapeHtml(u.email)}</span>
+              <span class="mt-1 block sm:hidden"><span class="rounded px-2 py-0.5 text-xs ${u.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.status === 'ACTIVE' ? '有効' : '停止中'}</span></span>
+            </td>
+            <td class="hidden break-all p-3 sm:table-cell">${escapeHtml(u.email)}</td>
+            <td class="hidden p-3 md:table-cell">${u.role === 'ADMIN' ? '管理者' : '会員'}</td>
+            <td class="hidden p-3 sm:table-cell"><span class="rounded px-2 py-0.5 text-xs ${u.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.status === 'ACTIVE' ? '有効' : '停止中'}</span></td>
+            <td class="hidden p-3 text-gray-400 md:table-cell">${formatDateTime(u.createdAt)}</td>
+            <td class="p-3">${u.role !== 'ADMIN' ? `<button data-action="toggle" class="whitespace-nowrap text-brand-500 hover:underline">${u.status === 'ACTIVE' ? '凍結する' : '解除する'}</button>` : ''}</td>
           </tr>
         `,
         )

@@ -74,11 +74,20 @@ if (requireAuth('')) {
 
   document.getElementById('profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const res = await authApi.updateProfile({
-      name: document.getElementById('profile-name').value,
-      phone: document.getElementById('profile-phone').value,
-    });
+    let res;
+    try {
+      res = await authApi.updateProfile({
+        name: document.getElementById('profile-name').value,
+        phone: document.getElementById('profile-phone').value,
+      });
+    } catch (err) {
+      // 伝えないと「保存を押しても何も起きない」ように見える
+      showMessage(getErrorMessage(err, 'プロフィールを更新できませんでした'));
+      return;
+    }
     Auth.setUser(res.data);
+    // ヘッダーの「◯◯ 様」は読み込み時に描いたままなので、保存した名前で引き直す
+    initLayout({ base: '' });
     showMessage('プロフィールを更新しました');
   });
 
