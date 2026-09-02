@@ -1,0 +1,40 @@
+{
+  "name": "Solo Shop",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "features": {
+    // psql / pg_isready / pg_dump を使えるようにする（バックアップ手順の確認にも使う）
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "upgradePackages": false
+    }
+  },
+
+  "forwardPorts": [5173, 4000],
+  "portsAttributes": {
+    "5173": {
+      "label": "購入者向けサイト",
+      "onAutoForward": "openPreview"
+    },
+    "4000": {
+      "label": "API",
+      // フロントエンドはブラウザから直接この転送URLを叩くため、
+      // 5173番と同じ可視性にしておく必要がある（片方だけ非公開だとログインできない）。
+      "visibility": "public",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // 依存インストール・DBの準備・サンプルデータ投入までを自動で行う
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["Prisma.prisma", "dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss"]
+    }
+  },
+
+  "remoteUser": "node"
+}

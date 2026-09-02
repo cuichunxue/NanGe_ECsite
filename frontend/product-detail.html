@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>商品詳細 - Solo Shop</title>
+    <meta property="og:type" content="product" />
+    <meta property="og:site_name" content="Solo Shop" />
+    <meta property="og:title" content="商品詳細 - Solo Shop" />
+    <meta property="og:description" content="個人で運営する小さなオンラインショップ、Solo Shopの商品ページです。" />
+    <meta property="og:url" content="https://shop.example.com/product-detail.html" />
+    <meta property="og:image" content="https://shop.example.com/assets/img/ogp.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
+
+      <div id="detail" class="mx-auto hidden max-w-7xl px-4 py-6">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div>
+            <div class="aspect-square overflow-hidden rounded-lg bg-gray-100">
+              <img id="main-image" class="h-full w-full object-cover" />
+            </div>
+            <div id="thumbnails" class="mt-2 flex gap-2"></div>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <h1 id="product-name" class="text-xl font-bold"></h1>
+            <div id="star-rating"></div>
+            <div class="rounded bg-gray-50 p-4">
+              <div class="flex flex-wrap items-baseline gap-3">
+                <span id="price" class="text-3xl font-bold text-brand-500"></span>
+                <span id="original-price" class="hidden text-gray-400 line-through"></span>
+                <span id="discount-badge" class="hidden rounded bg-red-600 px-2 py-0.5 text-sm font-bold text-white"></span>
+              </div>
+              <p id="discount-savings" class="mt-1 hidden text-sm text-green-700"></p>
+            </div>
+            <p id="description" class="text-sm text-gray-600"></p>
+            <p id="meta-line" class="text-sm text-gray-500"></p>
+            <p id="shipping-note" class="text-sm text-gray-500"></p>
+            <span id="low-stock-badge" class="hidden w-fit rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">残りわずかです。お早めにご注文ください</span>
+
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-600">数量</span>
+              <div class="flex items-center rounded border">
+                <button id="qty-minus" class="px-3 py-1">−</button>
+                <span id="qty-value" class="w-10 text-center">1</span>
+                <button id="qty-plus" class="px-3 py-1">+</button>
+              </div>
+            </div>
+
+            <p id="message" class="hidden text-sm text-green-600"></p>
+
+            <div class="flex gap-3">
+              <button id="add-cart-btn" class="btn-secondary flex-1">カートに追加</button>
+              <button id="buy-now-btn" class="btn-primary flex-1">今すぐ購入</button>
+              <button id="wishlist-btn" class="btn-secondary">♡</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="mt-12">
+          <h2 id="review-heading" class="mb-4 text-lg font-bold">レビュー</h2>
+          <p id="no-review-msg" class="hidden text-sm text-gray-400">まだレビューはありません</p>
+          <div id="review-list" class="flex flex-col gap-4"></div>
+        </section>
+
+        <section id="related-section" class="mt-12 hidden">
+          <h2 class="mb-4 text-lg font-bold">関連商品</h2>
+          <div id="related-grid"></div>
+        </section>
+
+        <p class="mt-8">
+          <a href="products.html" class="text-sm text-brand-500 hover:underline">← 商品一覧に戻る</a>
+        </p>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="assets/js/pages/product-detail.js"></script>
+  </body>
+</html>

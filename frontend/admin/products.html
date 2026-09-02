@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <title>商品管理 - 管理画面 - Solo Shop</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
+        <main class="min-w-0 flex-1">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <h1 class="text-xl font-bold">商品管理</h1>
+              <a href="product-form.html" class="btn-primary">+ 新規商品登録</a>
+            </div>
+            <div class="flex gap-2">
+              <input id="keyword" class="input max-w-xs" placeholder="商品名で検索" />
+              <button id="search-btn" class="btn-secondary">検索</button>
+            </div>
+            <div class="card overflow-x-auto">
+              <!-- スマホでは在庫・状態を商品名の下にまとめ、「操作」は必ず画面内に収める -->
+              <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500">
+                  <tr>
+                    <th class="p-3">商品</th>
+                    <th class="hidden p-3 sm:table-cell">SKU</th>
+                    <th class="p-3">価格</th>
+                    <th class="hidden p-3 sm:table-cell">在庫</th>
+                    <th class="hidden p-3 sm:table-cell">ステータス</th>
+                    <th class="whitespace-nowrap p-3">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="product-rows"></tbody>
+              </table>
+            </div>
+            <div id="pagination"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="../assets/js/pages/admin-products.js"></script>
+  </body>
+</html>

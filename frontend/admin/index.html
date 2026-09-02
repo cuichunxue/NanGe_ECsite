@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <title>ダッシュボード - 管理画面 - Solo Shop</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
+        <main class="min-w-0 flex-1">
+          <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
+          <div id="dashboard-view" class="hidden flex-col gap-6">
+            <h1 class="text-xl font-bold">ダッシュボード</h1>
+            <div id="shipment-notice" class="hidden rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"></div>
+            <div id="shipping-notice" class="hidden rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"></div>
+            <div id="stat-cards" class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5"></div>
+            <div class="card p-4">
+              <h2 class="mb-3 font-semibold">ステータス別注文数</h2>
+              <div id="status-counts" class="flex flex-wrap gap-3"></div>
+            </div>
+            <div class="card p-4">
+              <h2 class="mb-3 font-semibold">最近の注文</h2>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead class="text-gray-500">
+                    <tr><th class="pb-2">注文番号</th><th class="pb-2">会員</th><th class="pb-2">金額</th><th class="pb-2">日時</th></tr>
+                  </thead>
+                  <tbody id="recent-orders"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="../assets/js/pages/admin-dashboard.js"></script>
+  </body>
+</html>

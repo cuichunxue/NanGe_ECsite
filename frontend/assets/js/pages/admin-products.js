@@ -1,0 +1,81 @@
+import { initLayout, initAdminLayout } from '../layout.js';
+import { NO_IMAGE_PLACEHOLDER } from '../placeholder.js';
+import { requireAdmin } from '../guards.js';
+import { productApi, getErrorMessage } from '../api.js';
+import { formatPrice, escapeHtml } from '../format.js';
+import { renderPagination } from '../components.js';
+import { notify } from '../notify.js';
+
+if (requireAdmin('../')) {
+  initLayout({ base: '../' });
+  initAdminLayout('products.html');
+
+  let page = 1;
+  let keyword = '';
+
+  function load() {
+    productApi.list({ page, pageSize: 20, keyword: keyword || undefined, status: undefined }).then((res) => {
+      document.getElementById('product-rows').innerHTML = res.data
+        .map(
+          (p) => `
+          <tr class="border-t" data-product-id="${p.id}">
+            <td class="p-3">
+              <div class="flex items-center gap-2">
+                <img src="${escapeHtml(p.images[0] || NO_IMAGE_PLACEHOLDER)}" class="h-10 w-10 shrink-0 rounded object-cover" />
+                <span class="line-clamp-2">${escapeHtml(p.name)}</span>
+              </div>
+              <div class="mt-1 flex items-center gap-2 text-xs sm:hidden">
+                <span class="rounded px-2 py-0.5 ${p.status === 'ON_SALE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${p.status === 'ON_SALE' ? '公開中' : '非公開'}</span>
+                <span class="${p.stock <= 10 ? 'text-red-500' : 'text-gray-500'}">在庫 ${p.stock}</span>
+              </div>
+            </td>
+            <td class="hidden p-3 text-gray-500 sm:table-cell">${escapeHtml(p.sku)}</td>
+            <td class="p-3 whitespace-nowrap">${formatPrice(p.price)}</td>
+            <td class="hidden p-3 sm:table-cell ${p.stock <= 10 ? 'text-red-500' : ''}">${p.stock}</td>
+            <td class="hidden p-3 sm:table-cell">
+              <span class="rounded px-2 py-0.5 text-xs ${p.status === 'ON_SALE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${p.status === 'ON_SALE' ? '公開中' : '非公開'}</span>
+            </td>
+            <td class="p-3">
+              <div class="flex flex-col gap-1 whitespace-nowrap sm:flex-row sm:gap-2">
+                <a href="product-form.html?id=${encodeURIComponent(p.id)}" class="text-brand-500 hover:underline">編集</a>
+                <button data-action="toggle" class="text-left text-gray-500 hover:underline">${p.status === 'ON_SALE' ? '非公開' : '公開'}</button>
+              </div>
+            </td>
+          </tr>
+        `,
+        )
+        .join('');
+
+      document.querySelectorAll('[data-product-id]').forEach((row) => {
+        const p = res.data.find((item) => item.id === row.dataset.productId);
+        row.querySelector('[data-action="toggle"]').addEventListener('click', async () => {
+          // 「非公開」は論理削除（status を OFF_SHELF にする）で、商品自体は残る
+          try {
+            if (p.status === 'ON_SALE') {
+              await productApi.remove(p.id);
+            } else {
+              await productApi.update(p.id, { status: 'ON_SALE' });
+            }
+          } catch (err) {
+            notify(getErrorMessage(err, '公開状態を変更できませんでした'));
+            return;
+          }
+          load();
+        });
+      });
+
+      renderPagination(document.getElementById('pagination'), res.pagination.page, res.pagination.totalPages, (p) => {
+        page = p;
+        load();
+      });
+    });
+  }
+
+  document.getElementById('search-btn').addEventListener('click', () => {
+    keyword = document.getElementById('keyword').value;
+    page = 1;
+    load();
+  });
+
+  load();
+}

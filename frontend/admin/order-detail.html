@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <title>注文詳細 - 管理画面 - Solo Shop</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:flex-row lg:gap-6">
+        <aside id="admin-sidebar" class="w-full lg:w-52 lg:shrink-0"></aside>
+        <main class="min-w-0 flex-1">
+          <p id="loading-msg" class="py-16 text-center text-gray-400">読み込み中…</p>
+          <div id="detail-view" class="hidden max-w-3xl">
+            <a href="orders.html" class="text-sm text-brand-500 hover:underline">← 注文一覧に戻る</a>
+            <div class="card mt-4 p-6">
+              <div class="mb-4 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h1 id="order-no" class="break-all text-lg font-bold"></h1>
+                  <p id="order-created" class="text-sm text-gray-400"></p>
+                  <p id="order-buyer" class="break-all text-sm text-gray-500"></p>
+                  <p id="order-payment" class="text-sm text-gray-500"></p>
+                </div>
+                <span id="order-status-badge" class="rounded px-3 py-1 text-sm"></span>
+              </div>
+
+              <p id="error-msg" class="mb-4 hidden rounded bg-red-50 px-3 py-2 text-sm text-red-600"></p>
+
+              <div class="mb-4 rounded bg-gray-50 p-3 text-sm text-gray-600">
+                <p class="mb-1 font-medium">配送先</p>
+                <p id="address-recipient"></p>
+                <p id="address-detail"></p>
+              </div>
+
+              <div id="order-items" class="divide-y"></div>
+
+              <div class="mt-4 flex justify-between border-t pt-4 text-base font-bold text-brand-500">
+                <span>合計</span>
+                <span id="order-total"></span>
+              </div>
+
+              <p id="tracking-info" class="mt-6 hidden text-sm text-gray-600"></p>
+
+              <div id="ship-form" class="mt-6 hidden rounded border bg-gray-50 p-4">
+                <p class="mb-3 text-sm font-medium">発送の内容を記録します</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-600">配送業者</label>
+                    <select id="ship-carrier" class="input"></select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-600">お問い合わせ番号</label>
+                    <input id="ship-tracking" class="input" placeholder="例: 1234-5678-9012" />
+                  </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">追跡番号は購入者への発送メールに記載されます。追跡できない発送方法の場合は空欄のままで構いません。</p>
+                <div class="mt-3 flex gap-2">
+                  <button id="ship-confirm-btn" class="btn-primary">発送済みにする</button>
+                  <button id="ship-cancel-btn" class="btn-secondary">やめる</button>
+                </div>
+              </div>
+
+              <div id="status-actions" class="mt-6 hidden gap-3"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="../assets/js/pages/admin-order-detail.js"></script>
+  </body>
+</html>

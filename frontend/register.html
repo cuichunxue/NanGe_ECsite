@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>会員登録 - Solo Shop</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Solo Shop" />
+    <meta property="og:title" content="会員登録 - Solo Shop" />
+    <meta property="og:description" content="Solo Shopの会員登録はこちらから。" />
+    <meta property="og:url" content="https://shop.example.com/register.html" />
+    <meta property="og:image" content="https://shop.example.com/assets/img/ogp.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <div id="site-header"></div>
+    <div class="flex-1">
+      <div class="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
+        <div id="form-view">
+          <h1 class="mb-6 text-center text-2xl font-bold">会員登録</h1>
+          <form id="register-form" class="card flex flex-col gap-4 p-6">
+            <p id="error-msg" class="hidden rounded bg-red-50 px-3 py-2 text-sm text-red-600"></p>
+            <div>
+              <label class="mb-1 block text-sm text-gray-600">氏名</label>
+              <input id="name" required class="input" />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm text-gray-600">メールアドレス</label>
+              <input id="email" type="email" required class="input" />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm text-gray-600">電話番号（任意）</label>
+              <input id="phone" class="input" />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm text-gray-600">パスワード（英数字含む8文字以上）</label>
+              <input id="password" type="password" required minlength="8" class="input" />
+            </div>
+            <p class="text-center text-xs text-gray-500">
+              <a href="terms.html" class="text-brand-500 hover:underline">利用規約</a>
+              と
+              <a href="privacy.html" class="text-brand-500 hover:underline">プライバシーポリシー</a>
+              にご同意のうえ、ご登録ください。
+            </p>
+            <button id="submit-btn" type="submit" class="btn-primary w-full">同意して登録する</button>
+            <p class="text-center text-sm text-gray-500">
+              既にアカウントをお持ちの方は <a href="login.html" class="text-brand-500 hover:underline">ログイン</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div id="site-footer"></div>
+    <script type="module" src="assets/js/pages/register.js"></script>
+  </body>
+</html>

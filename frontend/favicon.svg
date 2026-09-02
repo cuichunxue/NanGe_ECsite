@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Solo Shop の目印。ブラウザのタブで小さく表示されるため、
+       線は太く、形は「お店の紙袋」だけに絞っている。 -->
+  <rect width="64" height="64" rx="14" fill="#c1682f"/>
+  <path d="M18 24h28l-3 24a4 4 0 0 1-4 3.5H25a4 4 0 0 1-4-3.5z" fill="#fff"/>
+  <path d="M25 24v-4a7 7 0 0 1 14 0v4" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>

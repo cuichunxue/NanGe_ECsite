@@ -1,0 +1,115 @@
+# Solo Shop — nginx 設定例
+#
+# 1つのドメインで、購入者向けサイト（静的ファイル）とAPIの両方を配信する。
+# 同じドメインにまとめることで、CORSの設定が不要になり、Cookieや画像の扱いも単純になる。
+#
+# 置き場所: /etc/nginx/sites-available/soloshop
+#   sudo ln -s /etc/nginx/sites-available/soloshop /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# 「shop.example.com」と「/var/www/soloshop」は自分の環境に合わせて書き換えること。
+
+# APIサーバー（systemd で動かしている Node.js プロセス）
+upstream soloshop_api {
+    server 127.0.0.1:4000;
+    keepalive 16;
+}
+
+# --- HTTP: HTTPSへ転送する ---
+server {
+    listen 80;
+    listen [::]:80;
+    server_name shop.example.com;
+
+    # 証明書の自動更新（certbot）が使う経路だけは転送せずに応答する
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# --- HTTPS: 本体 ---
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name shop.example.com;
+    # nginx 1.25.1 以降では listen 行の http2 は非推奨（警告が出るが動く）。
+    # 気になる場合は listen から http2 を外し、代わりに次の1行を書く:
+    #   http2 on;
+    # 使っている版は `nginx -v` で確認できる（Ubuntu 24.04 の標準は 1.24）。
+
+    # certbot が設置する証明書
+    ssl_certificate     /etc/letsencrypt/live/shop.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/shop.example.com/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # 購入者向けサイトの置き場所（このリポジトリの frontend/ をそのまま置く）
+    root /var/www/soloshop/frontend;
+    index index.html;
+
+    # 商品写真のアップロードは5MBまで。既定値(1MB)のままだと途中で切られる。
+    client_max_body_size 6m;
+
+    # 応答が返らないまま待たせ続けないための上限
+    proxy_connect_timeout 5s;
+    proxy_send_timeout    30s;
+    proxy_read_timeout    30s;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # HTTPSでのみ接続させる（ブラウザが次回から自動でHTTPSを使う）。
+    # 証明書が正しく動いていることを確認してから有効にすること。
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # --- API ---
+    location /api/ {
+        proxy_pass http://soloshop_api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        # レート制限を訪問者ごとにかけるために必要（backend/.env の TRUST_PROXY=1 とセット）
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # --- 商品写真 ---
+    # ファイル名はアップロードのたびに新しくなるため、長めに保存させてよい。
+    location /uploads/ {
+        proxy_pass http://soloshop_api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_cache_valid 200 30d;
+        # add_header はこのブロック内で1つでも書くと、上位で指定したものが引き継がれない。
+        # そのため、必要なものをここでも並べておく。
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
+    # --- 購入者向けサイト（静的ファイル） ---
+    # ファイル名に版番号を付けていないため、更新が古いまま表示されないよう毎回確認させる。
+    # 中身が変わっていなければ304が返るだけなので、表示は速いまま。
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+        add_header Cache-Control "no-cache" always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    error_page 404 /404.html;
+}

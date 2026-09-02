@@ -1,0 +1,85 @@
+import 'dotenv/config';
+
+function required(name: string, fallback?: string): string {
+  const value = process.env[name] ?? fallback;
+  if (value === undefined) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+/**
+ * Expressの `trust proxy` 設定値を組み立てる。
+ * nginx / Cloudflare などのリバースプロキシ配下では、これを設定しないと
+ * 全ての訪問者がプロキシの1IPとして扱われ、レート制限がサイト全体で共有されてしまう。
+ * 一方、直接公開しているのに有効化すると X-Forwarded-For を詐称してレート制限を
+ * 回避できてしまうため、既定は無効とし、プロキシ配下のときだけ明示的に指定する。
+ */
+function parseTrustProxy(raw: string | undefined): boolean | number | string {
+  if (raw === undefined || raw === '') return false;
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : raw; // 数値=信頼するホップ数 / 文字列=IPやサブネット指定
+}
+
+export const env = {
+  port: Number(process.env.PORT ?? 4000),
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
+  databaseUrl: required('DATABASE_URL'),
+  jwtAccessSecret: required('JWT_ACCESS_SECRET'),
+  jwtRefreshSecret: required('JWT_REFRESH_SECRET'),
+  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  isProd: process.env.NODE_ENV === 'production',
+
+  // メール本文に載せる購入者向けサイトのURL（注文詳細ページへのリンクに使う）
+  siteUrl: (process.env.SITE_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
+  // このAPIサーバー自身の公開URL。アップロードした商品画像のURLを組み立てるのに使う。
+  publicApiUrl: (process.env.PUBLIC_API_URL ?? `http://localhost:${Number(process.env.PORT ?? 4000)}`).replace(/\/$/, ''),
+  // アップロードした商品画像の保存先
+  uploadDir: process.env.UPLOAD_DIR ?? 'uploads',
+  smtp: {
+    host: process.env.SMTP_HOST ?? '',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+  },
+  mailFrom: process.env.MAIL_FROM ?? '',
+  // 購入者が返信したときの宛先。noreply@ から送る場合でも問い合わせを受け取れるようにする。
+  // 未設定なら OWNER_EMAIL を使う。
+  mailReplyTo: process.env.MAIL_REPLY_TO ?? '',
+  // 送信ドメイン認証(DKIM)。通常は送信サービス側が署名するため設定不要。
+  // 自前のメールサーバーなど、署名されない経路で送るときだけ鍵を設定する。
+  // セレクタだけの設定でも、`npm run mail:check` でDNSの公開鍵を確認できる。
+  mailDkim: {
+    selector: process.env.MAIL_DKIM_SELECTOR ?? '',
+    privateKey: (process.env.MAIL_DKIM_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+  },
+  // 注文通知の宛先。未設定なら管理者(店主)アカウントのメールアドレスを使う。
+  ownerEmail: process.env.OWNER_EMAIL ?? '',
+
+  // 請求書・領収書に記載する事業者情報。
+  // 登録番号は「適格請求書発行事業者」として登録した場合のみ設定する。
+  // 免税事業者は適格請求書を発行できないため、未設定なら領収書として発行する。
+  invoice: {
+    issuerName: process.env.INVOICE_ISSUER_NAME ?? '',
+    registrationNumber: process.env.INVOICE_REGISTRATION_NUMBER ?? '',
+  },
+
+  // 支払われないまま放置された注文の在庫を、何分後に売り場へ戻すか。
+  // 注文と同時に在庫を確保しているため、戻さないと決済ページで離脱されただけで
+  // 商品が売れなくなる。決済ページの有効期限はこの半分にして、
+  // 在庫を戻した後に支払われる事態が起きないようにする。
+  paymentHoldMinutes: Math.max(10, Number(process.env.PAYMENT_HOLD_MINUTES ?? 60)),
+
+  // 決済代行(KOMOJU)。未設定なら実決済は行わない。
+  komoju: {
+    apiBase: (process.env.KOMOJU_API_BASE ?? 'https://komoju.com/api/v1').replace(/\/$/, ''),
+    secretKey: process.env.KOMOJU_SECRET_KEY ?? '',
+    webhookSecret: process.env.KOMOJU_WEBHOOK_SECRET ?? '',
+  },
+};
